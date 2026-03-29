@@ -1,4 +1,4 @@
-import { clampToCanvas, tickTimer } from "./game-utils.js";
+import { tickTimer } from "./game-utils.js";
 
 const PLAYER_COLOR = "#ffcc00";
 const SWORD_HANDLE_COLOR = "#7a4f24";
@@ -62,10 +62,9 @@ export function updatePlayer(player, sword, input, deltaTime, canvas) {
 
   startSwordAttack(player, sword, input);
   updateSword(sword, deltaTime);
-  clampToCanvas(player, canvas);
 }
 
-export function renderPlayer(ctx, player, sword) {
+export function renderPlayer(ctx, player, sword, offsetX = 0) {
   if (!player.alive) {
     return;
   }
@@ -77,11 +76,11 @@ export function renderPlayer(ctx, player, sword) {
   }
 
   ctx.fillStyle = PLAYER_COLOR;
-  ctx.fillRect(drawPlayer.x, drawPlayer.y, drawPlayer.width, drawPlayer.height);
+  ctx.fillRect(drawPlayer.x + offsetX, drawPlayer.y, drawPlayer.width, drawPlayer.height);
 
   if (sword.active) {
     const hitbox = getSwordHitbox(drawPlayer, sword);
-    renderSword(ctx, drawPlayer, sword, hitbox);
+    renderSword(ctx, drawPlayer, sword, hitbox, offsetX);
   }
 }
 
@@ -192,29 +191,29 @@ function getSwordHitbox(player, sword) {
   };
 }
 
-function renderSword(ctx, player, sword, hitbox) {
+function renderSword(ctx, player, sword, hitbox, offsetX) {
   ctx.fillStyle = SWORD_HANDLE_COLOR;
 
   if (player.facing === "left") {
-    ctx.fillRect(hitbox.x + hitbox.width - sword.handleSize, hitbox.y, sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX + hitbox.width - sword.handleSize, hitbox.y, sword.handleSize, hitbox.height);
   } else if (player.facing === "right") {
-    ctx.fillRect(hitbox.x, hitbox.y, sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y, sword.handleSize, hitbox.height);
   } else if (player.facing === "up") {
-    ctx.fillRect(hitbox.x, hitbox.y + hitbox.height - sword.handleSize, hitbox.width, sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + hitbox.height - sword.handleSize, hitbox.width, sword.handleSize);
   } else {
-    ctx.fillRect(hitbox.x, hitbox.y, hitbox.width, sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width, sword.handleSize);
   }
 
   ctx.fillStyle = SWORD_BLADE_COLOR;
 
   if (player.facing === "left") {
-    ctx.fillRect(hitbox.x, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
   } else if (player.facing === "right") {
-    ctx.fillRect(hitbox.x + sword.handleSize, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX + sword.handleSize, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
   } else if (player.facing === "up") {
-    ctx.fillRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height - sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width, hitbox.height - sword.handleSize);
   } else {
-    ctx.fillRect(hitbox.x, hitbox.y + sword.handleSize, hitbox.width, hitbox.height - sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + sword.handleSize, hitbox.width, hitbox.height - sword.handleSize);
   }
 }
 

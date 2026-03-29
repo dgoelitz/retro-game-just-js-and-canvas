@@ -80,7 +80,7 @@ export function touchesEnemy(enemy, hitbox) {
   return overlapsEnemy(enemy, hitbox);
 }
 
-export function renderEnemy(ctx, enemy) {
+export function renderEnemy(ctx, enemy, offsetX = 0) {
   if (!enemy.alive) {
     return;
   }
@@ -92,7 +92,7 @@ export function renderEnemy(ctx, enemy) {
   const drawEnemy = getDrawEnemy(enemy);
 
   ctx.fillStyle = ENEMY_COLOR;
-  ctx.fillRect(drawEnemy.x, drawEnemy.y, drawEnemy.width, drawEnemy.height);
+  ctx.fillRect(drawEnemy.x + offsetX, drawEnemy.y, drawEnemy.width, drawEnemy.height);
 }
 
 function isEnemyHiddenDuringFlash(enemy) {
