@@ -1,11 +1,22 @@
 import { createInput } from "./input.js";
-import { createPlayer, createSword, renderPlayer, updatePlayer } from "./player.js";
+import { createEnemy, hitEnemy, renderEnemy, touchesEnemy, updateEnemy } from "./enemy.js";
+import {
+  createPlayer,
+  createSword,
+  damagePlayer,
+  getAttackHitbox,
+  getPlayerHitbox,
+  renderPlayer,
+  renderPlayerHealth,
+  updatePlayer
+} from "./player.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const input = createInput();
 const player = createPlayer();
 const sword = createSword();
+const enemy = createEnemy();
 
 ctx.imageSmoothingEnabled = false;
 
@@ -17,7 +28,9 @@ function render() {
   ctx.fillStyle = "#1d2b53";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  renderEnemy(ctx, enemy);
   renderPlayer(ctx, player, sword);
+  renderPlayerHealth(ctx, player);
 }
 
 function gameLoop(timestamp) {
@@ -25,6 +38,11 @@ function gameLoop(timestamp) {
   lastTime = timestamp;
 
   updatePlayer(player, sword, input, deltaTime, canvas);
+  updateEnemy(enemy, player, deltaTime, canvas);
+  hitEnemy(enemy, getAttackHitbox(player, sword));
+  if (touchesEnemy(enemy, getPlayerHitbox(player))) {
+    damagePlayer(player);
+  }
   render();
 
   requestAnimationFrame(gameLoop);

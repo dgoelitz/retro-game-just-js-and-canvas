@@ -6,7 +6,9 @@ Current features:
 - low-resolution pixel canvas
 - player movement with arrow keys or WASD
 - short sword attack with Space
-- separate modules for input, game loop, and player combat
+- player health, damage flash, and HUD
+- enemy patrol, chase, damage flash, and two-hit health
+- separate modules for input, game loop, player, and enemy logic
 
 Current focus:
 - keep the code small and understandable
