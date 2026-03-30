@@ -14,6 +14,22 @@ export function createWorld() {
           right: false,
           bottom: true,
           left: true
+        },
+        neighbors: {
+          right: 1
+        }
+      },
+      {
+        walls: {
+          top: false,
+          right: false,
+          bottom: true,
+          left: false
+        },
+        neighbors: {
+          left: 0,
+          right: 2,
+          up: 3
         }
       },
       {
@@ -22,6 +38,20 @@ export function createWorld() {
           right: true,
           bottom: true,
           left: false
+        },
+        neighbors: {
+          left: 1
+        }
+      },
+      {
+        walls: {
+          top: true,
+          right: true,
+          bottom: false,
+          left: true
+        },
+        neighbors: {
+          down: 1
         }
       }
     ]
@@ -34,20 +64,22 @@ export function getCurrentRoom(world) {
 
 export function renderWorld(ctx, world, canvas, renderRoomContents) {
   if (!world.transition) {
-    renderRoom(ctx, getCurrentRoom(world), canvas, 0);
-    renderRoomContents(world.currentRoomIndex, 0);
+    renderRoom(ctx, getCurrentRoom(world), canvas, 0, 0);
+    renderRoomContents(world.currentRoomIndex, 0, 0);
     return;
   }
 
-  const transitionOffset = (world.transition.elapsed / world.transition.duration) * canvas.width;
-  const fromOffset = Math.round(world.transition.direction * transitionOffset);
-  const toOffset = fromOffset - world.transition.direction * canvas.width;
+  const progress = world.transition.elapsed / world.transition.duration;
+  const fromOffsetX = Math.round(world.transition.directionX * progress * canvas.width);
+  const fromOffsetY = Math.round(world.transition.directionY * progress * canvas.height);
+  const toOffsetX = fromOffsetX - world.transition.directionX * canvas.width;
+  const toOffsetY = fromOffsetY - world.transition.directionY * canvas.height;
 
-  renderRoom(ctx, world.rooms[world.transition.fromRoomIndex], canvas, fromOffset);
-  renderRoomContents(world.transition.fromRoomIndex, fromOffset);
+  renderRoom(ctx, world.rooms[world.transition.fromRoomIndex], canvas, fromOffsetX, fromOffsetY);
+  renderRoomContents(world.transition.fromRoomIndex, fromOffsetX, fromOffsetY);
 
-  renderRoom(ctx, world.rooms[world.transition.toRoomIndex], canvas, toOffset);
-  renderRoomContents(world.transition.toRoomIndex, toOffset);
+  renderRoom(ctx, world.rooms[world.transition.toRoomIndex], canvas, toOffsetX, toOffsetY);
+  renderRoomContents(world.transition.toRoomIndex, toOffsetX, toOffsetY);
 }
 
 export function isTransitioning(world) {
@@ -66,26 +98,26 @@ export function updateWorldTransition(world, deltaTime) {
   }
 }
 
-function renderRoom(ctx, room, canvas, offsetX) {
+function renderRoom(ctx, room, canvas, offsetX, offsetY) {
   ctx.fillStyle = ROOM_BACKGROUND_COLOR;
-  ctx.fillRect(offsetX, 0, canvas.width, canvas.height);
+  ctx.fillRect(offsetX, offsetY, canvas.width, canvas.height);
 
   ctx.fillStyle = WALL_COLOR;
 
   if (room.walls.top) {
-    ctx.fillRect(offsetX, 0, canvas.width, WALL_THICKNESS);
+    ctx.fillRect(offsetX, offsetY, canvas.width, WALL_THICKNESS);
   }
 
   if (room.walls.right) {
-    ctx.fillRect(offsetX + canvas.width - WALL_THICKNESS, 0, WALL_THICKNESS, canvas.height);
+    ctx.fillRect(offsetX + canvas.width - WALL_THICKNESS, offsetY, WALL_THICKNESS, canvas.height);
   }
 
   if (room.walls.bottom) {
-    ctx.fillRect(offsetX, canvas.height - WALL_THICKNESS, canvas.width, WALL_THICKNESS);
+    ctx.fillRect(offsetX, offsetY + canvas.height - WALL_THICKNESS, canvas.width, WALL_THICKNESS);
   }
 
   if (room.walls.left) {
-    ctx.fillRect(offsetX, 0, WALL_THICKNESS, canvas.height);
+    ctx.fillRect(offsetX, offsetY, WALL_THICKNESS, canvas.height);
   }
 }
 
@@ -116,29 +148,59 @@ export function tryStartRoomTransition(player, world, canvas) {
 
   const room = getCurrentRoom(world);
 
-  if (!room.walls.right && player.x >= canvas.width) {
+  if (!room.walls.right && room.neighbors.right !== undefined && player.x >= canvas.width) {
     world.transition = {
       fromRoomIndex: world.currentRoomIndex,
-      toRoomIndex: world.currentRoomIndex + 1,
-      direction: -1,
+      toRoomIndex: room.neighbors.right,
+      directionX: -1,
+      directionY: 0,
       elapsed: 0,
       duration: ROOM_TRANSITION_DURATION
     };
-    world.currentRoomIndex += 1;
+    world.currentRoomIndex = room.neighbors.right;
     player.x = 0;
     return true;
   }
 
-  if (!room.walls.left && player.x + player.width <= 0) {
+  if (!room.walls.left && room.neighbors.left !== undefined && player.x + player.width <= 0) {
     world.transition = {
       fromRoomIndex: world.currentRoomIndex,
-      toRoomIndex: world.currentRoomIndex - 1,
-      direction: 1,
+      toRoomIndex: room.neighbors.left,
+      directionX: 1,
+      directionY: 0,
       elapsed: 0,
       duration: ROOM_TRANSITION_DURATION
     };
-    world.currentRoomIndex -= 1;
+    world.currentRoomIndex = room.neighbors.left;
     player.x = canvas.width - player.width;
+    return true;
+  }
+
+  if (!room.walls.top && room.neighbors.up !== undefined && player.y + player.height <= 0) {
+    world.transition = {
+      fromRoomIndex: world.currentRoomIndex,
+      toRoomIndex: room.neighbors.up,
+      directionX: 0,
+      directionY: 1,
+      elapsed: 0,
+      duration: ROOM_TRANSITION_DURATION
+    };
+    world.currentRoomIndex = room.neighbors.up;
+    player.y = canvas.height - player.height;
+    return true;
+  }
+
+  if (!room.walls.bottom && room.neighbors.down !== undefined && player.y >= canvas.height) {
+    world.transition = {
+      fromRoomIndex: world.currentRoomIndex,
+      toRoomIndex: room.neighbors.down,
+      directionX: 0,
+      directionY: -1,
+      elapsed: 0,
+      duration: ROOM_TRANSITION_DURATION
+    };
+    world.currentRoomIndex = room.neighbors.down;
+    player.y = 0;
     return true;
   }
 

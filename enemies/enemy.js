@@ -1,11 +1,11 @@
-import { clampToCanvas, tickTimer } from "./game-utils.js";
+import { clampToCanvas, tickTimer } from "../game-utils.js";
 
 const ENEMY_COLOR = "#e43636";
 const ENEMY_MODE_PATROL = "patrol";
 const ENEMY_MODE_CHASE = "chase";
 const ENEMY_MODE_RETURN = "return";
 
-export function createEnemy() {
+export function createEnemy(overrides = {}) {
   return {
     x: 100,
     y: 48,
@@ -24,7 +24,8 @@ export function createEnemy() {
     directionX: 1,
     chaseRange: 36,
     mode: ENEMY_MODE_PATROL,
-    alive: true
+    alive: true,
+    ...overrides
   };
 }
 
@@ -80,7 +81,7 @@ export function touchesEnemy(enemy, hitbox) {
   return overlapsEnemy(enemy, hitbox);
 }
 
-export function renderEnemy(ctx, enemy, offsetX = 0) {
+export function renderEnemy(ctx, enemy, offsetX = 0, offsetY = 0) {
   if (!enemy.alive) {
     return;
   }
@@ -92,7 +93,7 @@ export function renderEnemy(ctx, enemy, offsetX = 0) {
   const drawEnemy = getDrawEnemy(enemy);
 
   ctx.fillStyle = ENEMY_COLOR;
-  ctx.fillRect(drawEnemy.x + offsetX, drawEnemy.y, drawEnemy.width, drawEnemy.height);
+  ctx.fillRect(drawEnemy.x + offsetX, drawEnemy.y + offsetY, drawEnemy.width, drawEnemy.height);
 }
 
 function isEnemyHiddenDuringFlash(enemy) {
@@ -107,10 +108,6 @@ function isEnemyHiddenDuringFlash(enemy) {
 }
 
 function isPlayerInChaseRange(enemy, player) {
-  if (!player.alive) {
-    return false;
-  }
-
   const enemyCenter = getCenter(enemy);
   const playerCenter = getCenter(player);
   const distanceX = playerCenter.x - enemyCenter.x;

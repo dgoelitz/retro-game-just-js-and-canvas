@@ -16,8 +16,7 @@ export function createPlayer() {
     maxHealth: 3,
     invulnerableTimer: 0,
     invulnerableDuration: 1.8,
-    flashInterval: 0.2,
-    alive: true
+    flashInterval: 0.2
   };
 }
 
@@ -34,11 +33,6 @@ export function createSword() {
 
 export function updatePlayer(player, sword, input, deltaTime, canvas) {
   tickTimer(player, "invulnerableTimer", deltaTime);
-
-  if (!player.alive) {
-    sword.active = false;
-    return;
-  }
 
   if (input.left) {
     player.x -= player.speed * deltaTime;
@@ -64,11 +58,7 @@ export function updatePlayer(player, sword, input, deltaTime, canvas) {
   updateSword(sword, deltaTime);
 }
 
-export function renderPlayer(ctx, player, sword, offsetX = 0) {
-  if (!player.alive) {
-    return;
-  }
-
+export function renderPlayer(ctx, player, sword, offsetX = 0, offsetY = 0) {
   const drawPlayer = getDrawPlayer(player);
 
   if (isPlayerHiddenDuringFlash(player)) {
@@ -76,16 +66,16 @@ export function renderPlayer(ctx, player, sword, offsetX = 0) {
   }
 
   ctx.fillStyle = PLAYER_COLOR;
-  ctx.fillRect(drawPlayer.x + offsetX, drawPlayer.y, drawPlayer.width, drawPlayer.height);
+  ctx.fillRect(drawPlayer.x + offsetX, drawPlayer.y + offsetY, drawPlayer.width, drawPlayer.height);
 
   if (sword.active) {
     const hitbox = getSwordHitbox(drawPlayer, sword);
-    renderSword(ctx, drawPlayer, sword, hitbox, offsetX);
+    renderSword(ctx, drawPlayer, sword, hitbox, offsetX, offsetY);
   }
 }
 
 export function getAttackHitbox(player, sword) {
-  if (!player.alive || !sword.active) {
+  if (!sword.active) {
     return null;
   }
 
@@ -93,10 +83,6 @@ export function getAttackHitbox(player, sword) {
 }
 
 export function getPlayerHitbox(player) {
-  if (!player.alive) {
-    return null;
-  }
-
   const drawPlayer = getDrawPlayer(player);
 
   return {
@@ -108,17 +94,13 @@ export function getPlayerHitbox(player) {
 }
 
 export function damagePlayer(player) {
-  if (!player.alive || player.invulnerableTimer > 0) {
+  if (player.health <= 0 || player.invulnerableTimer > 0) {
     return;
   }
 
   player.health -= 1;
   player.invulnerableTimer = player.invulnerableDuration;
-
-  if (player.health <= 0) {
-    player.health = 0;
-    player.alive = false;
-  }
+  if (player.health < 0) player.health = 0;
 }
 
 export function renderPlayerHealth(ctx, player) {
@@ -191,34 +173,34 @@ function getSwordHitbox(player, sword) {
   };
 }
 
-function renderSword(ctx, player, sword, hitbox, offsetX) {
+function renderSword(ctx, player, sword, hitbox, offsetX, offsetY) {
   ctx.fillStyle = SWORD_HANDLE_COLOR;
 
   if (player.facing === "left") {
-    ctx.fillRect(hitbox.x + offsetX + hitbox.width - sword.handleSize, hitbox.y, sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX + hitbox.width - sword.handleSize, hitbox.y + offsetY, sword.handleSize, hitbox.height);
   } else if (player.facing === "right") {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y, sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY, sword.handleSize, hitbox.height);
   } else if (player.facing === "up") {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y + hitbox.height - sword.handleSize, hitbox.width, sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY + hitbox.height - sword.handleSize, hitbox.width, sword.handleSize);
   } else {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width, sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY, hitbox.width, sword.handleSize);
   }
 
   ctx.fillStyle = SWORD_BLADE_COLOR;
 
   if (player.facing === "left") {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY, hitbox.width - sword.handleSize, hitbox.height);
   } else if (player.facing === "right") {
-    ctx.fillRect(hitbox.x + offsetX + sword.handleSize, hitbox.y, hitbox.width - sword.handleSize, hitbox.height);
+    ctx.fillRect(hitbox.x + offsetX + sword.handleSize, hitbox.y + offsetY, hitbox.width - sword.handleSize, hitbox.height);
   } else if (player.facing === "up") {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y, hitbox.width, hitbox.height - sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY, hitbox.width, hitbox.height - sword.handleSize);
   } else {
-    ctx.fillRect(hitbox.x + offsetX, hitbox.y + sword.handleSize, hitbox.width, hitbox.height - sword.handleSize);
+    ctx.fillRect(hitbox.x + offsetX, hitbox.y + offsetY + sword.handleSize, hitbox.width, hitbox.height - sword.handleSize);
   }
 }
 
 function startSwordAttack(player, sword, input) {
-  if (!player.alive || !input.attack || sword.active) {
+  if (!input.attack || sword.active) {
     return;
   }
 
