@@ -1,4 +1,4 @@
-import { clampToCanvas, tickTimer } from "../game-utils.js";
+import { clampToCanvas, tickTimer, ZERO_OFFSET } from "../game-utils.js";
 
 const ENEMY_COLOR = "#e43636";
 const ENEMY_MODE_PATROL = "patrol";
@@ -81,7 +81,7 @@ export function touchesEnemy(enemy, hitbox) {
   return overlapsEnemy(enemy, hitbox);
 }
 
-export function renderEnemy(ctx, enemy, offsetX = 0, offsetY = 0) {
+export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
   if (!enemy.alive) {
     return;
   }
@@ -93,7 +93,7 @@ export function renderEnemy(ctx, enemy, offsetX = 0, offsetY = 0) {
   const drawEnemy = getDrawEnemy(enemy);
 
   ctx.fillStyle = ENEMY_COLOR;
-  ctx.fillRect(drawEnemy.x + offsetX, drawEnemy.y + offsetY, drawEnemy.width, drawEnemy.height);
+  ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
 }
 
 function isEnemyHiddenDuringFlash(enemy) {
@@ -112,9 +112,9 @@ function isPlayerInChaseRange(enemy, player) {
   const playerCenter = getCenter(player);
   const distanceX = playerCenter.x - enemyCenter.x;
   const distanceY = playerCenter.y - enemyCenter.y;
-  const distance = Math.hypot(distanceX, distanceY);
+  const distanceToPlayer = Math.hypot(distanceX, distanceY);
 
-  return distance <= enemy.chaseRange;
+  return distanceToPlayer <= enemy.chaseRange;
 }
 
 function chasePlayer(enemy, player, deltaTime) {
@@ -138,15 +138,15 @@ function patrol(enemy, deltaTime) {
 function returnHome(enemy, deltaTime) {
   const distanceX = enemy.homeX - enemy.x;
   const distanceY = enemy.homeY - enemy.y;
-  const distance = Math.hypot(distanceX, distanceY);
+  const distanceToHome = Math.hypot(distanceX, distanceY);
 
-  if (distance === 0) {
+  if (distanceToHome === 0) {
     return;
   }
 
-  const step = enemy.patrolSpeed * deltaTime;
+  const returnStep = enemy.patrolSpeed * deltaTime;
 
-  if (step >= distance) {
+  if (returnStep >= distanceToHome) {
     enemy.x = enemy.homeX;
     enemy.y = enemy.homeY;
     enemy.directionX = 1;
@@ -154,8 +154,8 @@ function returnHome(enemy, deltaTime) {
     return;
   }
 
-  enemy.x += (distanceX / distance) * step;
-  enemy.y += (distanceY / distance) * step;
+  enemy.x += (distanceX / distanceToHome) * returnStep;
+  enemy.y += (distanceY / distanceToHome) * returnStep;
 }
 
 function overlapsEnemy(enemy, hitbox) {
@@ -187,12 +187,12 @@ function moveToward(enemy, target, step) {
   const enemyCenter = getCenter(enemy);
   const distanceX = target.x - enemyCenter.x;
   const distanceY = target.y - enemyCenter.y;
-  const distance = Math.hypot(distanceX, distanceY);
+  const distanceToTarget = Math.hypot(distanceX, distanceY);
 
-  if (distance === 0) {
+  if (distanceToTarget === 0) {
     return;
   }
 
-  enemy.x += (distanceX / distance) * step;
-  enemy.y += (distanceY / distance) * step;
+  enemy.x += (distanceX / distanceToTarget) * step;
+  enemy.y += (distanceY / distanceToTarget) * step;
 }

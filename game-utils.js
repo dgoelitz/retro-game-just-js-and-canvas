@@ -1,3 +1,8 @@
+export const ZERO_OFFSET = {
+  x: 0,
+  y: 0
+};
+
 export function tickTimer(target, key, deltaTime) {
   if (target[key] <= 0) {
     return;
