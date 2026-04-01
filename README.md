@@ -5,10 +5,11 @@ Browser game project for learning retro-style game engine architecture step by s
 Current features:
 - low-resolution pixel canvas
 - player movement with arrow keys or WASD
-- short sword attack with Space
+- short sword attack with Space after the sword is unlocked
 - player health, damage flash, and a three-square HUD
 - enemy patrol, chase, return-home behavior, damage flash, and two-hit health
-- four connected rooms with sliding screen transitions
+- five connected rooms with sliding screen transitions
+- an NPC conversation that unlocks the sword and can be paged with Space or Enter
 - game-over screen with Space to restart the run
 - separate modules for input, game state, player, sword, enemies, world, and UI
 
@@ -30,8 +31,9 @@ Then open [http://localhost:8000](http://localhost:8000).
 - `game-utils.js`: shared utility helpers
 - `player/`: player movement, health, HUD, and sword behavior
 - `enemies/`: enemy behavior and room enemy setup
+- `npcs/`: NPC placement and dialogue data
 - `world/`: room data, wall rules, and room transition logic
-- `ui/`: overlay rendering such as the game-over screen
+- `ui/`: overlay rendering such as the game-over screen and dialogue box
 
 ## Current world
 
@@ -39,10 +41,11 @@ Then open [http://localhost:8000](http://localhost:8000).
 - Room 1: hub room with exits left, right, and up
 - Room 2: room to the right of the hub
 - Room 3: room above the hub with three enemies
+- Room 4: room above room 3 with a town NPC who gives the player a sword
 
 ## Engine ideas this project practices
 
 - input -> update -> collision/rules -> render
 - plain data objects plus update/render functions instead of heavy abstractions
 - separate modules for world rules, entities, and UI state
-- transient game states such as room transitions and game over
+- transient game states such as room transitions, dialogue, and game over
