@@ -14,8 +14,8 @@ export function createSword() {
   };
 }
 
-export function updateSword(player, sword, input, deltaTime) {
-  startSwordAttack(sword, input);
+export function updateSword(player, sword, input, deltaTime, canAttack = true) {
+  startSwordAttack(sword, input, canAttack);
 
   if (!sword.active) {
     return;
@@ -83,8 +83,12 @@ export function getAttackHitbox(player, sword) {
   };
 }
 
-function startSwordAttack(sword, input) {
-  if (!input.attack || sword.active) {
+function startSwordAttack(sword, input, canAttack) {
+  if (!input.attack || sword.active || !canAttack) {
+    if (!canAttack) {
+      input.attack = false;
+    }
+
     return;
   }
 

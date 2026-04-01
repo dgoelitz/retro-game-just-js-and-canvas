@@ -19,7 +19,7 @@ export function createPlayer() {
   };
 }
 
-export function updatePlayer(player, sword, input, deltaTime) {
+export function updatePlayer(player, sword, input, deltaTime, canAttack = true) {
   tickTimer(player, "invulnerableTimer", deltaTime);
   const movementStep = player.speed * deltaTime;
 
@@ -43,7 +43,7 @@ export function updatePlayer(player, sword, input, deltaTime) {
     player.facing = "down";
   }
 
-  updateSword(player, sword, input, deltaTime);
+  updateSword(player, sword, input, deltaTime, canAttack);
 }
 
 export function renderPlayer(ctx, player, sword, offset = ZERO_OFFSET) {
@@ -67,6 +67,18 @@ export function getPlayerHitbox(player) {
     width: drawPlayer.width,
     height: drawPlayer.height
   };
+}
+
+export function getPlayerPosition(player) {
+  return {
+    x: player.x,
+    y: player.y
+  };
+}
+
+export function setPlayerPosition(player, position) {
+  player.x = position.x;
+  player.y = position.y;
 }
 
 export function damagePlayer(player) {
