@@ -1,57 +1,97 @@
-const BOX_COLOR = "#222034";
-const BORDER_COLOR = "#fff1e8";
-const TEXT_COLOR = "#fff1e8";
-const BOX_HEIGHT = 36;
-const BOX_MARGIN = 6;
-const BOX_PADDING_X = 6;
-const BOX_PADDING_Y = 6;
-const TEXT_LINE_HEIGHT = 9;
-const FONT = "8px 'Trebuchet MS', sans-serif";
+import {
+  DIALOGUE_BORDER_COLOR,
+  DIALOGUE_BOX_COLOR,
+  DIALOGUE_BOX_HEIGHT,
+  DIALOGUE_BOX_MARGIN,
+  DIALOGUE_BOX_PADDING_X,
+  DIALOGUE_BOX_PADDING_Y,
+  DIALOGUE_FONT,
+  DIALOGUE_TEXT_COLOR,
+  DIALOGUE_TEXT_LINE_HEIGHT
+} from "../dialogue/dialogue-config.js";
 
 export function renderDialogueBox(ctx, canvas, dialogue) {
-  const boxX = BOX_MARGIN;
-  const boxY = canvas.height - BOX_HEIGHT - BOX_MARGIN;
-  const boxWidth = canvas.width - BOX_MARGIN * 2;
+  const boxBounds = getDialogueBoxBounds(canvas);
+  const currentPage = dialogue.pages[dialogue.pageIndex];
+  const lines = getVisibleLines(currentPage, dialogue.visibleCharacters);
 
-  ctx.fillStyle = BOX_COLOR;
-  ctx.fillRect(boxX, boxY, boxWidth, BOX_HEIGHT);
+  drawDialogueBackground(ctx, boxBounds);
+  configureDialogueText(ctx);
+  drawDialogueLines(ctx, boxBounds, lines);
+}
 
-  ctx.strokeStyle = BORDER_COLOR;
+function getDialogueBoxBounds(canvas) {
+  return {
+    x: DIALOGUE_BOX_MARGIN,
+    y: canvas.height - DIALOGUE_BOX_HEIGHT - DIALOGUE_BOX_MARGIN,
+    width: canvas.width - DIALOGUE_BOX_MARGIN * 2,
+    height: DIALOGUE_BOX_HEIGHT
+  };
+}
+
+function drawDialogueBackground(ctx, boxBounds) {
+  ctx.fillStyle = DIALOGUE_BOX_COLOR;
+  ctx.fillRect(boxBounds.x, boxBounds.y, boxBounds.width, boxBounds.height);
+
+  ctx.strokeStyle = DIALOGUE_BORDER_COLOR;
   ctx.lineWidth = 1;
-  ctx.strokeRect(boxX + 0.5, boxY + 0.5, boxWidth - 1, BOX_HEIGHT - 1);
+  ctx.strokeRect(boxBounds.x + 0.5, boxBounds.y + 0.5, boxBounds.width - 1, boxBounds.height - 1);
+}
 
-  ctx.fillStyle = TEXT_COLOR;
-  ctx.font = FONT;
+function configureDialogueText(ctx) {
+  ctx.fillStyle = DIALOGUE_TEXT_COLOR;
+  ctx.font = DIALOGUE_FONT;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
+}
 
-  const lines = wrapText(ctx, dialogue.pages[dialogue.pageIndex], boxWidth - BOX_PADDING_X * 2);
+function drawDialogueLines(ctx, boxBounds, lines) {
+  lines.forEach((line, i) => {
+    const textX = boxBounds.x + DIALOGUE_BOX_PADDING_X;
+    const textY = boxBounds.y + DIALOGUE_BOX_PADDING_Y + i * DIALOGUE_TEXT_LINE_HEIGHT;
 
-  lines.forEach((line, index) => {
-    ctx.fillText(line, boxX + BOX_PADDING_X, boxY + BOX_PADDING_Y + index * TEXT_LINE_HEIGHT);
+    ctx.fillText(line, textX, textY);
   });
 }
 
-function wrapText(ctx, text, maxWidth) {
-  const words = text.split(" ");
-  const lines = [];
-  let currentLine = words[0] ?? "";
-
-  for (let i = 1; i < words.length; i += 1) {
-    const nextLine = `${currentLine} ${words[i]}`;
-
-    if (ctx.measureText(nextLine).width <= maxWidth) {
-      currentLine = nextLine;
-      continue;
-    }
-
-    lines.push(currentLine);
-    currentLine = words[i];
+function getVisibleLines(page, visibleCharacters) {
+  if (!page) {
+    return [];
   }
 
-  if (currentLine) {
-    lines.push(currentLine);
+  const visibleLines = [];
+  let remainingCharacters = Math.floor(visibleCharacters);
+
+  for (let i = 0; i < page.lines.length; i += 1) {
+    const line = page.lines[i];
+    const visibleLine = getVisibleLineText(line, remainingCharacters);
+    const isLastLine = i === page.lines.length - 1;
+
+    visibleLines.push(visibleLine);
+    remainingCharacters = getRemainingCharacters(remainingCharacters, line, isLastLine);
   }
 
-  return lines;
+  return visibleLines;
+}
+
+function getRemainingCharacters(remainingCharacters, line, isLastLine) {
+  if (remainingCharacters <= 0) {
+    return 0;
+  }
+
+  const hiddenCharacters = Math.max(remainingCharacters - line.length, 0);
+
+  if (isLastLine) {
+    return hiddenCharacters;
+  }
+
+  return Math.max(hiddenCharacters - 1, 0);
+}
+
+function getVisibleLineText(line, remainingCharacters) {
+  if (remainingCharacters <= 0) {
+    return "";
+  }
+
+  return line.slice(0, remainingCharacters);
 }

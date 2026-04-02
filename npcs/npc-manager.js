@@ -1,15 +1,8 @@
 import { createNpc } from "./npc.js";
 
-const FIRST_DIALOGUE_PAGES = [
-  "Welcome to the town.",
-  "You've been out in the wilderness?",
-  "That's not safe without a sword!",
-  "Here I have a cheap one you can have."
-];
+const FIRST_DIALOGUE_TEXT = "Welcome to the town. You've been out in the wilderness? That's not safe without a sword! Here I have a cheap one you can have.";
 
-const REPEAT_DIALOGUE_PAGES = [
-  "Treat that sword well and it will treat you well."
-];
+const REPEAT_DIALOGUE_TEXT = "Treat that sword well and it will treat you well.";
 
 export function createNpcsByRoom() {
   return {
@@ -23,16 +16,16 @@ export function createNpcsByRoom() {
   };
 }
 
-export function getNpcDialogue(npc, session) {
-  if (npc.id === "town-guide" && !session.hasSword) {
+export function getNpcDialogue(npc, hasSword) {
+  if (npc.id === "town-guide" && !hasSword) {
     return {
-      pages: FIRST_DIALOGUE_PAGES,
+      text: FIRST_DIALOGUE_TEXT,
       rewardSword: true
     };
   }
 
   return {
-    pages: REPEAT_DIALOGUE_PAGES,
+    text: REPEAT_DIALOGUE_TEXT,
     rewardSword: false
   };
 }
