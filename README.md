@@ -29,9 +29,10 @@ Then open [http://localhost:8000](http://localhost:8000).
 - `game-state.js`: creates and resets the current game session
 - `input.js`: tracks keyboard input state
 - `game-utils.js`: shared utility helpers
+- `dialogue/`: dialogue config, page-building, and dialogue state flow
 - `player/`: player movement, health, HUD, and sword behavior
 - `enemies/`: enemy behavior and room enemy setup
-- `npcs/`: NPC placement and dialogue data
+- `npcs/`: NPC placement, dialogue lookup, and NPC interaction rules
 - `world/`: room data, wall rules, and room transition logic
 - `ui/`: overlay rendering such as the game-over screen and dialogue box
 
