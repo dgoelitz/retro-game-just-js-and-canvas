@@ -22,7 +22,7 @@ export function advanceDialogue(session, input) {
   }
 
   const currentPage = session.dialogue.pages[session.dialogue.pageIndex];
-  const currentPageLength = currentPage?.fullText.length ?? 0;
+  const currentPageLength = getPageCharacterCount(currentPage);
 
   if (session.dialogue.visibleCharacters < currentPageLength) {
     session.dialogue.visibleCharacters = currentPageLength;
@@ -49,7 +49,7 @@ export function updateDialogue(dialogue, deltaTime) {
   }
 
   const currentPage = dialogue.pages[dialogue.pageIndex];
-  const currentPageLength = currentPage?.fullText.length ?? 0;
+  const currentPageLength = getPageCharacterCount(currentPage);
 
   if (dialogue.visibleCharacters >= currentPageLength) {
     dialogue.visibleCharacters = currentPageLength;
@@ -61,4 +61,15 @@ export function updateDialogue(dialogue, deltaTime) {
   if (dialogue.visibleCharacters > currentPageLength) {
     dialogue.visibleCharacters = currentPageLength;
   }
+}
+
+function getPageCharacterCount(page) {
+  if (!page || page.length === 0) {
+    return 0;
+  }
+
+  const charactersInLines = page.reduce((total, line) => total + line.length, 0);
+  const spacesBetweenLines = page.length - 1;
+
+  return charactersInLines + spacesBetweenLines;
 }

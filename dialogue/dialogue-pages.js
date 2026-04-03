@@ -9,64 +9,93 @@ export function createDialoguePages(ctx, canvas, text) {
   ctx.save();
   ctx.font = DIALOGUE_FONT;
 
-  const maxWidth = canvas.width - DIALOGUE_BOX_MARGIN * 2 - DIALOGUE_BOX_PADDING_X * 2;
-  const pages = paginateText(ctx, text, maxWidth, DIALOGUE_MAX_TEXT_LINES);
+  const textAreaWidth = getDialogueTextAreaWidth(canvas);
+  const pages = paginateText(ctx, text, textAreaWidth, DIALOGUE_MAX_TEXT_LINES);
 
   ctx.restore();
 
   return pages;
 }
 
+function getDialogueTextAreaWidth(canvas) {
+  const horizontalMargin = DIALOGUE_BOX_MARGIN * 2;
+  const horizontalPadding = DIALOGUE_BOX_PADDING_X * 2;
+
+  return canvas.width - horizontalMargin - horizontalPadding;
+}
+
 function paginateText(ctx, text, maxWidth, maxLines) {
   const words = text.split(" ").filter(Boolean);
   const pages = [];
-  let currentLines = [];
-  let currentWords = [];
+  let currentLineWords = [];
+  let currentPageLines = [];
 
   for (const word of words) {
-    const candidateLineWords = [...currentWords, word];
-    const candidateLine = candidateLineWords.join(" ");
+    const candidateLineWords = [...currentLineWords, word];
+    const candidateLineText = joinWords(candidateLineWords);
 
-    if (ctx.measureText(candidateLine).width <= maxWidth) {
-      currentWords = candidateLineWords;
+    if (doesTextFitOnLine(ctx, candidateLineText, maxWidth)) {
+      currentLineWords = candidateLineWords;
       continue;
     }
 
-    if (currentWords.length > 0) {
-      currentLines.push(currentWords.join(" "));
-      currentWords = [word];
-
-      if (currentLines.length < maxLines) {
-        continue;
-      }
-
-      pages.push(createPage(currentLines));
-      currentLines = [];
+    if (hasWords(currentLineWords)) {
+      currentPageLines = commitCurrentLine(currentLineWords, currentPageLines, pages, maxLines);
+      currentLineWords = [word];
       continue;
     }
 
-    currentLines.push(word);
-
-    if (currentLines.length === maxLines) {
-      pages.push(createPage(currentLines));
-      currentLines = [];
-    }
+    currentPageLines = appendLine(currentPageLines, word);
+    currentPageLines = flushFullPage(pages, currentPageLines, maxLines);
   }
 
-  if (currentWords.length > 0) {
-    currentLines.push(currentWords.join(" "));
-  }
+  currentPageLines = commitCurrentLine(currentLineWords, currentPageLines, pages, maxLines);
 
-  if (currentLines.length > 0) {
-    pages.push(createPage(currentLines));
-  }
+  pushTrailingPage(pages, currentPageLines);
 
   return pages;
 }
 
-function createPage(lines) {
-  return {
-    lines,
-    fullText: lines.join(" ")
-  };
+function doesTextFitOnLine(ctx, text, maxWidth) {
+  return ctx.measureText(text).width <= maxWidth;
+}
+
+function hasWords(words) {
+  return words.length > 0;
+}
+
+function joinWords(words) {
+  return words.join(" ");
+}
+
+function appendLine(pageLines, lineText) {
+  return [...pageLines, lineText];
+}
+
+function commitCurrentLine(currentLineWords, currentPageLines, pages, maxLines) {
+  if (currentLineWords.length === 0) {
+    return currentPageLines;
+  }
+
+  const completedLineText = joinWords(currentLineWords);
+  const pageLinesWithCurrentLine = appendLine(currentPageLines, completedLineText);
+
+  return flushFullPage(pages, pageLinesWithCurrentLine, maxLines);
+}
+
+function flushFullPage(pages, pageLines, maxLines) {
+  if (pageLines.length < maxLines) {
+    return pageLines;
+  }
+
+  pages.push(pageLines);
+  return [];
+}
+
+function pushTrailingPage(pages, pageLines) {
+  if (pageLines.length === 0) {
+    return;
+  }
+
+  pages.push(pageLines);
 }

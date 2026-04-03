@@ -62,10 +62,10 @@ function getVisibleLines(page, visibleCharacters) {
   const visibleLines = [];
   let remainingCharacters = Math.floor(visibleCharacters);
 
-  for (let i = 0; i < page.lines.length; i += 1) {
-    const line = page.lines[i];
+  for (let i = 0; i < page.length; i += 1) {
+    const line = page[i];
     const visibleLine = getVisibleLineText(line, remainingCharacters);
-    const isLastLine = i === page.lines.length - 1;
+    const isLastLine = i === page.length - 1;
 
     visibleLines.push(visibleLine);
     remainingCharacters = getRemainingCharacters(remainingCharacters, line, isLastLine);
