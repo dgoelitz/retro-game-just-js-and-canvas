@@ -31,12 +31,13 @@ export function createRooms() {
     {
       walls: {
         top: true,
-        right: true,
+        right: false,
         bottom: true,
         left: false
       },
       neighbors: {
-        left: 1
+        left: 1,
+        right: 5
       }
     },
     {
@@ -60,6 +61,29 @@ export function createRooms() {
       },
       neighbors: {
         down: 3
+      }
+    },
+    {
+      walls: {
+        top: true,
+        right: false,
+        bottom: true,
+        left: false
+      },
+      neighbors: {
+        left: 2,
+        right: 6
+      }
+    },
+    {
+      walls: {
+        top: true,
+        right: true,
+        bottom: true,
+        left: false
+      },
+      neighbors: {
+        left: 5
       }
     }
   ];
