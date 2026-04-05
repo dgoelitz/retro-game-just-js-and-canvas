@@ -14,11 +14,11 @@ export function createRoomPropsByRoom() {
       createBush({ x: 152, y: 44 }),
       createBush({ x: 152, y: 52 }),
       createBush({ x: 152, y: 60 }),
-      createWallBlock({ x: 156, y: 68, width: WALL_THICKNESS, height: 52 })
+      createWallBlock({ x: 156, y: 68, width: WALL_THICKNESS, height: 22 })
     ],
     5: [
       createWallBlock({ x: 0, y: 0, width: WALL_THICKNESS, height: 36 }),
-      createWallBlock({ x: 0, y: 68, width: WALL_THICKNESS, height: 52 }),
+      createWallBlock({ x: 0, y: 68, width: WALL_THICKNESS, height: 22 }),
       createBush({ x: 56, y: 24 }),
       createBush({ x: 64, y: 24 }),
       createBush({ x: 72, y: 24 }),
@@ -27,13 +27,13 @@ export function createRoomPropsByRoom() {
       createBush({ x: 120, y: 72 })
     ],
     6: [
-      createBush({ x: 28, y: 84 }),
-      createBush({ x: 36, y: 84 }),
-      createBush({ x: 44, y: 84 }),
-      createBush({ x: 100, y: 84 }),
-      createBush({ x: 108, y: 84 }),
-      createBush({ x: 116, y: 84 }),
-      createDungeonEntrance({ x: 66, y: 14 })
+      createBush({ x: 28, y: 78 }),
+      createBush({ x: 36, y: 78 }),
+      createBush({ x: 44, y: 78 }),
+      createBush({ x: 100, y: 78 }),
+      createBush({ x: 108, y: 78 }),
+      createBush({ x: 116, y: 78 }),
+      createDungeonEntrance({ x: 66, y: 12 })
     ]
   };
 }

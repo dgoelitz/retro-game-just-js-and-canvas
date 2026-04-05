@@ -7,7 +7,7 @@ export function createEnemiesByRoom() {
     ],
     1: [
       createPatrolEnemy({ x: 52, y: 32, patrolMinX: 40, patrolMaxX: 72 }),
-      createPatrolEnemy({ x: 104, y: 76, patrolMinX: 92, patrolMaxX: 124 })
+      createPatrolEnemy({ x: 104, y: 64, patrolMinX: 92, patrolMaxX: 124 })
     ],
     3: [
       createPatrolEnemy({ x: 36, y: 30, patrolMinX: 24, patrolMaxX: 56 }),
