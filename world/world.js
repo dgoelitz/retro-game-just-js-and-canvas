@@ -1,5 +1,10 @@
 import { ZERO_OFFSET } from "../game-utils.js";
-import { getRoomTransitionOffsets, isTransitioning, tryStartRoomTransition, updateWorldTransition } from "./room-transition.js";
+import {
+  getRoomTransitionOffsets,
+  handleWorldTransition,
+  isTransitioning,
+  tryStartRoomTransition
+} from "./room-transition.js";
 import { createRooms, ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
 
 export function createWorld() {
@@ -14,7 +19,7 @@ export function getCurrentRoom(world) {
   return world.rooms[world.currentRoomIndex];
 }
 
-export { isTransitioning, tryStartRoomTransition, updateWorldTransition };
+export { handleWorldTransition, isTransitioning, tryStartRoomTransition };
 
 export function renderWorld(ctx, world, canvas, renderRoomContents) {
   if (!world.transition) {

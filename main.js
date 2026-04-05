@@ -11,16 +11,15 @@ import { renderNpc } from "./npcs/npc.js";
 import { resolveNpcCollisions, tryTalkToNearbyNpc } from "./npcs/npc-interaction.js";
 import {
   hitRoomProps,
-  pushPlayerOutOfEdgeBlockers,
   renderRoomProp,
   resolveRoomPropCollisions
 } from "./world/room-props.js";
 import {
   constrainPlayerToRoom,
+  handleWorldTransition,
   isTransitioning,
   renderWorld,
-  tryStartRoomTransition,
-  updateWorldTransition
+  tryStartRoomTransition
 } from "./world/world.js";
 import {
   damagePlayer,
@@ -92,16 +91,7 @@ function gameLoop(timestamp) {
       advanceDialogue(session, input);
     }
   } else if (isTransitioning(session.world)) {
-    const completedTransition = session.world.transition;
-    updateWorldTransition(session.world, deltaTime);
-
-    if (!isTransitioning(session.world)) {
-      const currentRoomProps = session.roomPropsByRoom[session.world.currentRoomIndex] ?? [];
-      const enteredFromEdge = getEnteredRoomEdge(completedTransition);
-      if (enteredFromEdge) {
-        pushPlayerOutOfEdgeBlockers(session.player, currentRoomProps, enteredFromEdge, canvas);
-      }
-    }
+    handleWorldTransition(session.world, session.player, session.roomPropsByRoom, canvas, deltaTime);
   } else {
     const previousPlayerPosition = {
       x: session.player.x,
@@ -148,19 +138,3 @@ function gameLoop(timestamp) {
 }
 
 requestAnimationFrame(gameLoop);
-
-function getEnteredRoomEdge(completedTransition) {
-  if (!completedTransition) {
-    return null;
-  }
-
-  if (completedTransition.directionX > 0) {
-    return "right";
-  }
-
-  if (completedTransition.directionX < 0) {
-    return "left";
-  }
-
-  return null;
-}

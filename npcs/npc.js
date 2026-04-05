@@ -1,4 +1,4 @@
-import { ZERO_OFFSET } from "../game-utils.js";
+import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
 
 const NPC_COLOR = "#00e756";
 const TALK_DISTANCE = 6;
@@ -20,7 +20,7 @@ export function renderNpc(ctx, npc, offset = ZERO_OFFSET) {
 }
 
 export function touchesNpc(npc, hitbox) {
-  return overlaps(npc, hitbox);
+  return rectanglesOverlap(npc, hitbox);
 }
 
 export function canTalkToNpc(npc, hitbox) {
@@ -31,14 +31,5 @@ export function canTalkToNpc(npc, hitbox) {
     height: npc.height + TALK_DISTANCE * 2
   };
 
-  return overlaps(interactionBounds, hitbox);
-}
-
-function overlaps(a, b) {
-  return (
-    b.x < a.x + a.width &&
-    b.x + b.width > a.x &&
-    b.y < a.y + a.height &&
-    b.y + b.height > a.y
-  );
+  return rectanglesOverlap(interactionBounds, hitbox);
 }

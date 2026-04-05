@@ -1,4 +1,4 @@
-import { clampToCanvas, tickTimer, ZERO_OFFSET } from "../game-utils.js";
+import { clampToCanvas, rectanglesOverlap, tickTimer, ZERO_OFFSET } from "../game-utils.js";
 
 const ENEMY_COLOR = "#e43636";
 const ENEMY_MODE_PATROL = "patrol";
@@ -159,12 +159,7 @@ function returnHome(enemy, deltaTime) {
 }
 
 function overlapsEnemy(enemy, hitbox) {
-  return (
-    hitbox.x < enemy.x + enemy.width &&
-    hitbox.x + hitbox.width > enemy.x &&
-    hitbox.y < enemy.y + enemy.height &&
-    hitbox.y + hitbox.height > enemy.y
-  );
+  return rectanglesOverlap(enemy, hitbox);
 }
 
 function getDrawEnemy(enemy) {

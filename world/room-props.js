@@ -1,4 +1,4 @@
-import { ZERO_OFFSET } from "../game-utils.js";
+import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
 import { WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
 
 const BUSH_COLOR = "#00a84f";
@@ -110,25 +110,8 @@ export function hitRoomProps(roomProps, attackHitbox) {
       continue;
     }
 
-    if (overlaps(prop, attackHitbox)) {
+    if (rectanglesOverlap(prop, attackHitbox)) {
       prop.destroyed = true;
-    }
-  }
-}
-
-export function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
-  const step = 1;
-
-  if (edge === "left") {
-    while (player.x < canvas.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.x += step;
-    }
-    return;
-  }
-
-  if (edge === "right") {
-    while (player.x > -player.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.x -= step;
     }
   }
 }
@@ -190,7 +173,7 @@ function overlapsBlockingProp(roomProps, hitbox) {
       continue;
     }
 
-    if (overlaps(prop, hitbox)) {
+    if (rectanglesOverlap(prop, hitbox)) {
       return true;
     }
   }
@@ -200,13 +183,4 @@ function overlapsBlockingProp(roomProps, hitbox) {
 
 function isCuttable(prop) {
   return prop.cuttable;
-}
-
-function overlaps(a, b) {
-  return (
-    b.x < a.x + a.width &&
-    b.x + b.width > a.x &&
-    b.y < a.y + a.height &&
-    b.y + b.height > a.y
-  );
 }

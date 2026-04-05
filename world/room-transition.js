@@ -1,3 +1,5 @@
+import { rectanglesOverlap } from "../game-utils.js";
+
 const ROOM_TRANSITION_DURATION = 0.35;
 
 export function isTransitioning(world) {
@@ -14,6 +16,25 @@ export function updateWorldTransition(world, deltaTime) {
   if (world.transition.elapsed >= world.transition.duration) {
     world.transition = null;
   }
+}
+
+export function handleWorldTransition(world, player, roomPropsByRoom, canvas, deltaTime) {
+  const completedTransition = world.transition;
+
+  updateWorldTransition(world, deltaTime);
+
+  if (isTransitioning(world) || !completedTransition) {
+    return;
+  }
+
+  const currentRoomProps = roomPropsByRoom[world.currentRoomIndex] ?? [];
+  const enteredFromEdge = getEnteredRoomEdge(completedTransition);
+
+  if (!enteredFromEdge) {
+    return;
+  }
+
+  pushPlayerOutOfEdgeBlockers(player, currentRoomProps, enteredFromEdge, canvas);
 }
 
 export function tryStartRoomTransition(player, world, canvas) {
@@ -80,4 +101,56 @@ function startRoomTransition(world, toRoomIndex, directionX, directionY) {
   };
 
   world.currentRoomIndex = toRoomIndex;
+}
+
+function getEnteredRoomEdge(completedTransition) {
+  if (completedTransition.directionX > 0) {
+    return "right";
+  }
+
+  if (completedTransition.directionX < 0) {
+    return "left";
+  }
+
+  return null;
+}
+
+function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
+  const step = 1;
+
+  if (edge === "left") {
+    while (player.x < canvas.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
+      player.x += step;
+    }
+    return;
+  }
+
+  if (edge === "right") {
+    while (player.x > -player.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
+      player.x -= step;
+    }
+  }
+}
+
+function getEntityHitbox(entity) {
+  return {
+    x: Math.round(entity.x),
+    y: Math.round(entity.y),
+    width: entity.width,
+    height: entity.height
+  };
+}
+
+function overlapsBlockingProp(roomProps, hitbox) {
+  for (const prop of roomProps) {
+    if (!prop.blocksMovement || prop.destroyed) {
+      continue;
+    }
+
+    if (rectanglesOverlap(prop, hitbox)) {
+      return true;
+    }
+  }
+
+  return false;
 }

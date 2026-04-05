@@ -21,3 +21,12 @@ export function clampToCanvas(entity, canvas) {
   if (entity.x + entity.width > canvas.width) entity.x = canvas.width - entity.width;
   if (entity.y + entity.height > canvas.height) entity.y = canvas.height - entity.height;
 }
+
+export function rectanglesOverlap(a, b) {
+  return (
+    b.x < a.x + a.width &&
+    b.x + b.width > a.x &&
+    b.y < a.y + a.height &&
+    b.y + b.height > a.y
+  );
+}
