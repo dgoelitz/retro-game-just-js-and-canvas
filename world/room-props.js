@@ -33,8 +33,41 @@ export function createRoomPropsByRoom() {
       createBush({ x: 100, y: 78 }),
       createBush({ x: 108, y: 78 }),
       createBush({ x: 116, y: 78 }),
-      createDungeonEntrance({ x: 66, y: 12 })
+      createDungeonEntrance({
+        x: 66,
+        y: 12,
+        destination: {
+          worldKey: "dungeon",
+          roomIndex: 0,
+          playerX: 76,
+          playerY: 70
+        }
+      })
     ]
+  };
+}
+
+export function createDungeonRoomPropsByRoom() {
+  return {
+    0: [
+      createDungeonExit({
+        x: 66,
+        y: 6,
+        destination: {
+          worldKey: "overworld",
+          roomIndex: 6,
+          playerX: 76,
+          playerY: 24
+        }
+      })
+    ]
+  };
+}
+
+export function createRoomPropsByWorldKey() {
+  return {
+    overworld: createRoomPropsByRoom(),
+    dungeon: createDungeonRoomPropsByRoom()
   };
 }
 
@@ -61,6 +94,15 @@ export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
 
     ctx.fillStyle = DUNGEON_OPENING_COLOR;
     ctx.fillRect(drawX + 4, drawY + 4, prop.width - 8, prop.height - 4);
+    return;
+  }
+
+  if (prop.kind === "dungeon-exit") {
+    ctx.fillStyle = DUNGEON_COLOR;
+    ctx.fillRect(drawX, drawY, prop.width, prop.height);
+
+    ctx.fillStyle = DUNGEON_OPENING_COLOR;
+    ctx.fillRect(drawX + 4, drawY, prop.width - 8, prop.height - 4);
     return;
   }
 
@@ -116,6 +158,20 @@ export function hitRoomProps(roomProps, attackHitbox) {
   }
 }
 
+export function findRoomPortal(roomProps, hitbox) {
+  for (const prop of roomProps) {
+    if (prop.destroyed || !prop.destination) {
+      continue;
+    }
+
+    if (rectanglesOverlap(prop, hitbox)) {
+      return prop.destination;
+    }
+  }
+
+  return null;
+}
+
 function createBush(overrides = {}) {
   return {
     kind: "bush",
@@ -133,6 +189,20 @@ function createBush(overrides = {}) {
 function createDungeonEntrance(overrides = {}) {
   return {
     kind: "dungeon-entrance",
+    x: 0,
+    y: 0,
+    width: 28,
+    height: 20,
+    blocksMovement: false,
+    cuttable: false,
+    destroyed: false,
+    ...overrides
+  };
+}
+
+function createDungeonExit(overrides = {}) {
+  return {
+    kind: "dungeon-exit",
     x: 0,
     y: 0,
     width: 28,

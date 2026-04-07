@@ -2,7 +2,7 @@ export const WALL_COLOR = "#5f574f";
 export const WALL_THICKNESS = 4;
 export const ROOM_BACKGROUND_COLOR = "#1d2b53";
 
-export function createRooms() {
+export function createOverworldRooms() {
   return [
     {
       walls: {
@@ -85,6 +85,20 @@ export function createRooms() {
       neighbors: {
         left: 5
       }
+    }
+  ];
+}
+
+export function createDungeonRooms() {
+  return [
+    {
+      walls: {
+        top: true,
+        right: true,
+        bottom: true,
+        left: true
+      },
+      neighbors: {}
     }
   ];
 }

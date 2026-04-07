@@ -17,6 +17,13 @@ export function createEnemiesByRoom() {
   };
 }
 
+export function createEnemiesByWorldKey() {
+  return {
+    overworld: createEnemiesByRoom(),
+    dungeon: {}
+  };
+}
+
 function createPatrolEnemy({ x = 100, y = 48, patrolMinX = 88, patrolMaxX = 112 } = {}) {
   return createEnemy({
     x,

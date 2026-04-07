@@ -16,6 +16,13 @@ export function createNpcsByRoom() {
   };
 }
 
+export function createNpcsByWorldKey() {
+  return {
+    overworld: createNpcsByRoom(),
+    dungeon: {}
+  };
+}
+
 export function getNpcDialogue(npc, hasSword) {
   if (npc.id === "town-guide" && !hasSword) {
     return {

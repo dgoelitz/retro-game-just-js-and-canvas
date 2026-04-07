@@ -34,9 +34,7 @@ export function resolveNpcCollisions(player, previousPosition, roomNpcs) {
   setPlayerPosition(player, previousPosition);
 }
 
-export function tryTalkToNearbyNpc(session, ctx, canvas, playerHitbox) {
-  const roomNpcs = session.npcsByRoom[session.world.currentRoomIndex] ?? [];
-
+export function tryTalkToNearbyNpc(session, roomNpcs, ctx, canvas, playerHitbox) {
   for (const npc of roomNpcs) {
     if (!canTalkToNpc(npc, playerHitbox)) {
       continue;

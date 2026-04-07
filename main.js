@@ -5,11 +5,17 @@ import {
   createGameSession,
   GAME_STATE_DIALOGUE,
   GAME_STATE_GAME_OVER,
-  resetGameSession
+  getActiveEnemiesByRoom,
+  getActiveNpcsByRoom,
+  getActiveRoomPropsByRoom,
+  getActiveWorld,
+  resetGameSession,
+  travelToDestination
 } from "./game-state.js";
 import { renderNpc } from "./npcs/npc.js";
 import { resolveNpcCollisions, tryTalkToNearbyNpc } from "./npcs/npc-interaction.js";
 import {
+  findRoomPortal,
   hitRoomProps,
   renderRoomProp,
   resolveRoomPropCollisions
@@ -42,12 +48,17 @@ ctx.imageSmoothingEnabled = false;
 let lastTime = 0;
 
 function render() {
+  const activeWorld = getActiveWorld(session);
+  const activeEnemiesByRoom = getActiveEnemiesByRoom(session);
+  const activeNpcsByRoom = getActiveNpcsByRoom(session);
+  const activeRoomPropsByRoom = getActiveRoomPropsByRoom(session);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  renderWorld(ctx, session.world, canvas, (roomIndex, offset) => {
-    const roomEnemies = session.enemiesByRoom[roomIndex] ?? [];
-    const roomNpcs = session.npcsByRoom[roomIndex] ?? [];
-    const roomProps = session.roomPropsByRoom[roomIndex] ?? [];
+  renderWorld(ctx, activeWorld, canvas, (roomIndex, offset) => {
+    const roomEnemies = activeEnemiesByRoom[roomIndex] ?? [];
+    const roomNpcs = activeNpcsByRoom[roomIndex] ?? [];
+    const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
 
     for (const enemy of roomEnemies) {
       renderEnemy(ctx, enemy, offset);
@@ -61,7 +72,7 @@ function render() {
       renderNpc(ctx, npc, offset);
     }
 
-    if (roomIndex === session.world.currentRoomIndex) {
+    if (roomIndex === activeWorld.currentRoomIndex) {
       renderPlayer(ctx, session.player, session.sword, offset);
     }
   });
@@ -78,6 +89,10 @@ function render() {
 function gameLoop(timestamp) {
   const deltaTime = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
+  const activeWorld = getActiveWorld(session);
+  const activeEnemiesByRoom = getActiveEnemiesByRoom(session);
+  const activeNpcsByRoom = getActiveNpcsByRoom(session);
+  const activeRoomPropsByRoom = getActiveRoomPropsByRoom(session);
 
   if (session.mode === GAME_STATE_GAME_OVER) {
     if (input.attack) {
@@ -90,8 +105,8 @@ function gameLoop(timestamp) {
     if (input.attack || input.interact) {
       advanceDialogue(session, input);
     }
-  } else if (isTransitioning(session.world)) {
-    handleWorldTransition(session.world, session.player, session.roomPropsByRoom, canvas, deltaTime);
+  } else if (isTransitioning(activeWorld)) {
+    handleWorldTransition(activeWorld, session.player, activeRoomPropsByRoom, canvas, deltaTime);
   } else {
     const previousPlayerPosition = {
       x: session.player.x,
@@ -99,19 +114,19 @@ function gameLoop(timestamp) {
     };
     updatePlayer(session.player, session.sword, input, deltaTime, session.hasSword);
 
-    const roomNpcs = session.npcsByRoom[session.world.currentRoomIndex] ?? [];
-    const roomProps = session.roomPropsByRoom[session.world.currentRoomIndex] ?? [];
+    const roomNpcs = activeNpcsByRoom[activeWorld.currentRoomIndex] ?? [];
+    const roomProps = activeRoomPropsByRoom[activeWorld.currentRoomIndex] ?? [];
     resolveNpcCollisions(session.player, previousPlayerPosition, roomNpcs);
     resolveRoomPropCollisions(session.player, previousPlayerPosition, roomProps);
 
-    if (!tryStartRoomTransition(session.player, session.world, canvas)) {
-      constrainPlayerToRoom(session.player, session.world, canvas);
+    if (!tryStartRoomTransition(session.player, activeWorld, canvas)) {
+      constrainPlayerToRoom(session.player, activeWorld, canvas);
     }
 
     const attackHitbox = getAttackHitbox(session.player, session.sword);
     hitRoomProps(roomProps, attackHitbox);
     const currentPlayerHitbox = getPlayerHitbox(session.player);
-    const roomEnemies = session.enemiesByRoom[session.world.currentRoomIndex] ?? [];
+    const roomEnemies = activeEnemiesByRoom[activeWorld.currentRoomIndex] ?? [];
 
     for (const enemy of roomEnemies) {
       updateEnemy(enemy, session.player, deltaTime, canvas);
@@ -122,7 +137,16 @@ function gameLoop(timestamp) {
     }
 
     if (input.interact) {
-      tryTalkToNearbyNpc(session, ctx, canvas, currentPlayerHitbox);
+      const talkedToNpc = tryTalkToNearbyNpc(session, roomNpcs, ctx, canvas, currentPlayerHitbox);
+
+      if (!talkedToNpc) {
+        const destination = findRoomPortal(roomProps, currentPlayerHitbox);
+
+        if (destination) {
+          travelToDestination(session, destination);
+        }
+      }
+
       input.interact = false;
     }
 

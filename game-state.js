@@ -1,8 +1,9 @@
-import { createEnemiesByRoom } from "./enemies/enemy-manager.js";
-import { createNpcsByRoom } from "./npcs/npc-manager.js";
+import { createEnemiesByWorldKey } from "./enemies/enemy-manager.js";
+import { createNpcsByWorldKey } from "./npcs/npc-manager.js";
 import { createPlayer } from "./player/player.js";
 import { createSword } from "./player/sword.js";
-import { createRoomPropsByRoom } from "./world/room-props.js";
+import { createRoomPropsByWorldKey } from "./world/room-props.js";
+import { createDungeonRooms, createOverworldRooms } from "./world/room-data.js";
 import { createWorld } from "./world/world.js";
 
 export const GAME_STATE_PLAYING = "playing";
@@ -13,10 +14,14 @@ export function createGameSession() {
   return {
     player: createPlayer(),
     sword: createSword(),
-    world: createWorld(),
-    enemiesByRoom: createEnemiesByRoom(),
-    npcsByRoom: createNpcsByRoom(),
-    roomPropsByRoom: createRoomPropsByRoom(),
+    worldsByKey: {
+      overworld: createWorld(createOverworldRooms()),
+      dungeon: createWorld(createDungeonRooms())
+    },
+    activeWorldKey: "overworld",
+    enemiesByWorldKey: createEnemiesByWorldKey(),
+    npcsByWorldKey: createNpcsByWorldKey(),
+    roomPropsByWorldKey: createRoomPropsByWorldKey(),
     hasSword: false,
     dialogue: null,
     mode: GAME_STATE_PLAYING
@@ -28,11 +33,39 @@ export function resetGameSession(session) {
 
   session.player = nextSession.player;
   session.sword = nextSession.sword;
-  session.world = nextSession.world;
-  session.enemiesByRoom = nextSession.enemiesByRoom;
-  session.npcsByRoom = nextSession.npcsByRoom;
-  session.roomPropsByRoom = nextSession.roomPropsByRoom;
+  session.worldsByKey = nextSession.worldsByKey;
+  session.activeWorldKey = nextSession.activeWorldKey;
+  session.enemiesByWorldKey = nextSession.enemiesByWorldKey;
+  session.npcsByWorldKey = nextSession.npcsByWorldKey;
+  session.roomPropsByWorldKey = nextSession.roomPropsByWorldKey;
   session.hasSword = nextSession.hasSword;
   session.dialogue = nextSession.dialogue;
   session.mode = nextSession.mode;
+}
+
+export function getActiveWorld(session) {
+  return session.worldsByKey[session.activeWorldKey];
+}
+
+export function getActiveEnemiesByRoom(session) {
+  return session.enemiesByWorldKey[session.activeWorldKey];
+}
+
+export function getActiveNpcsByRoom(session) {
+  return session.npcsByWorldKey[session.activeWorldKey];
+}
+
+export function getActiveRoomPropsByRoom(session) {
+  return session.roomPropsByWorldKey[session.activeWorldKey];
+}
+
+export function travelToDestination(session, destination) {
+  session.activeWorldKey = destination.worldKey;
+  const nextWorld = getActiveWorld(session);
+
+  nextWorld.currentRoomIndex = destination.roomIndex;
+  nextWorld.transition = null;
+  session.player.x = destination.playerX;
+  session.player.y = destination.playerY;
+  session.sword.active = false;
 }

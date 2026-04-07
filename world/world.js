@@ -5,13 +5,13 @@ import {
   isTransitioning,
   tryStartRoomTransition
 } from "./room-transition.js";
-import { createRooms, ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
+import { ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
 
-export function createWorld() {
+export function createWorld(rooms) {
   return {
     currentRoomIndex: 0,
     transition: null,
-    rooms: createRooms()
+    rooms
   };
 }
 
