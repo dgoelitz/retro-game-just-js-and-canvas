@@ -1,6 +1,13 @@
 import { createEnemy } from "./enemy.js";
 
-export function createEnemiesByRoom() {
+export function createEnemiesByWorldKey() {
+  return {
+    overworld: createOverworldEnemiesByRoom(),
+    dungeon: createDungeonEnemiesByRoom()
+  };
+}
+
+function createOverworldEnemiesByRoom() {
   return {
     0: [
       createPatrolEnemy()
@@ -17,20 +24,163 @@ export function createEnemiesByRoom() {
   };
 }
 
-export function createEnemiesByWorldKey() {
+function createDungeonEnemiesByRoom() {
   return {
-    overworld: createEnemiesByRoom(),
-    dungeon: {}
+    0: [
+      createPatrolEnemy({ x: 56, y: 26, patrolMinX: 28, patrolMaxX: 68 }),
+      createPatrolEnemy({ x: 76, y: 42, patrolMinX: 64, patrolMaxX: 96 }),
+      createPatrolEnemy({ x: 96, y: 26, patrolMinX: 92, patrolMaxX: 124 })
+    ],
+    1: [
+      createTurretEnemy({ x: 76, y: 8, shotCooldown: 1.2 })
+    ],
+    2: [
+      createStoneEnemy({ x: 42, y: 30, orbitRadiusX: 10, orbitRadiusY: 10 }),
+      createStoneEnemy({ x: 74, y: 56, orbitRadiusX: 8, orbitRadiusY: 8 }),
+      createStoneEnemy({ x: 108, y: 30, orbitRadiusX: 10, orbitRadiusY: 10 }),
+      createTurretEnemy({ x: 76, y: 10, shotCooldown: 1.1 })
+    ],
+    3: [
+      createFixedTurretEnemy({ x: 6, y: 62, fixedDirection: "right", shotCooldown: 1.4 }),
+      createFixedTurretEnemy({ x: 22, y: 32, fixedDirection: "right", shotCooldown: 0.8 }),
+      createFixedTurretEnemy({ x: 150, y: 14, fixedDirection: "left", shotCooldown: 1.0 }),
+      createFixedTurretEnemy({ x: 150, y: 34, fixedDirection: "left", shotCooldown: 1.0 })
+    ],
+    4: [
+      createPatrolEnemy({ x: 42, y: 30, patrolMinX: 28, patrolMaxX: 60 }),
+      createPatrolEnemy({ x: 110, y: 60, patrolMinX: 90, patrolMaxX: 126 }),
+      createStoneEnemy({ x: 70, y: 24, orbitRadiusX: 8, orbitRadiusY: 10 }),
+      createStoneEnemy({ x: 92, y: 46, orbitRadiusX: 8, orbitRadiusY: 10 }),
+      createFixedTurretEnemy({ x: 8, y: 18, fixedDirection: "right", shotCooldown: 1.2 }),
+      createFixedTurretEnemy({ x: 142, y: 40, fixedDirection: "left", shotCooldown: 0.9 }),
+      createTurretEnemy({ x: 76, y: 8, shotCooldown: 1.0 })
+    ],
+    5: [
+      createTurretEnemy({ x: 78, y: 26, shotCooldown: 1.0 })
+    ],
+    6: [
+      createFixedTurretEnemy({ x: 6, y: 18, fixedDirection: "right", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 6, y: 42, fixedDirection: "right", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 6, y: 66, fixedDirection: "right", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 150, y: 30, fixedDirection: "left", shotCooldown: 1.0 }),
+      createFixedTurretEnemy({ x: 150, y: 54, fixedDirection: "left", shotCooldown: 1.0 })
+    ],
+    7: [
+      createPatrolEnemy({ x: 42, y: 26, patrolMinX: 26, patrolMaxX: 58 }),
+      createPatrolEnemy({ x: 68, y: 60, patrolMinX: 52, patrolMaxX: 84 }),
+      createPatrolEnemy({ x: 96, y: 26, patrolMinX: 84, patrolMaxX: 112 }),
+      createPatrolEnemy({ x: 118, y: 60, patrolMinX: 108, patrolMaxX: 134 })
+    ],
+    8: [
+      createSnakeEnemy({ x: 32, y: 16, homeX: 32, homeY: 16, orbitRadiusX: 42, orbitRadiusY: 22, orbitSpeed: 0.7 }),
+      createSnakeEnemy({ x: 74, y: 40, homeX: 74, homeY: 40, orbitRadiusX: 18, orbitRadiusY: 12, orbitSpeed: 0.8 }),
+      createSnakeEnemy({ x: 70, y: 30, homeX: 78, homeY: 36, orbitRadiusX: 30, orbitRadiusY: 20, orbitSpeed: -0.6 })
+    ],
+    9: [
+      createMinibossEnemy()
+    ],
+    10: [
+      createFixedTurretEnemy({ x: 6, y: 12, fixedDirection: "right", shotCooldown: 1.1 }),
+      createFixedTurretEnemy({ x: 6, y: 34, fixedDirection: "right", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 6, y: 58, fixedDirection: "right", shotCooldown: 1.1 }),
+      createFixedTurretEnemy({ x: 150, y: 24, fixedDirection: "left", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 150, y: 48, fixedDirection: "left", shotCooldown: 1.1 })
+    ],
+    12: [
+      createBossEnemy()
+    ]
   };
 }
 
 function createPatrolEnemy({ x = 100, y = 48, patrolMinX = 88, patrolMaxX = 112 } = {}) {
   return createEnemy({
+    type: "patrol",
     x,
     y,
     homeX: x,
     homeY: y,
     patrolMinX,
     patrolMaxX
+  });
+}
+
+function createTurretEnemy(overrides = {}) {
+  return createEnemy({
+    type: "turret",
+    width: 8,
+    height: 8,
+    health: 1,
+    invincible: true,
+    chaseRange: 0,
+    ...overrides
+  });
+}
+
+function createFixedTurretEnemy(overrides = {}) {
+  return createEnemy({
+    type: "fixed-turret",
+    width: 8,
+    height: 8,
+    health: 1,
+    invincible: true,
+    ...overrides
+  });
+}
+
+function createStoneEnemy(overrides = {}) {
+  return createEnemy({
+    type: "stone",
+    width: 8,
+    height: 8,
+    health: 1,
+    invincible: true,
+    ...overrides
+  });
+}
+
+function createSnakeEnemy(overrides = {}) {
+  return createEnemy({
+    type: "snake",
+    width: 8,
+    height: 8,
+    health: 99,
+    invincible: true,
+    ...overrides
+  });
+}
+
+function createMinibossEnemy() {
+  return createEnemy({
+    type: "miniboss",
+    x: 76,
+    y: 14,
+    homeX: 76,
+    homeY: 14,
+    width: 10,
+    height: 10,
+    health: 8,
+    mode: "throw",
+    shotCooldown: 0.9
+  });
+}
+
+function createBossEnemy() {
+  return createEnemy({
+    type: "boss",
+    x: 66,
+    y: 4,
+    homeX: 66,
+    homeY: 4,
+    width: 18,
+    height: 18,
+    health: 8,
+    mode: "slam",
+    slamAxis: "horizontal",
+    slamWall: "top",
+    directionX: 1,
+    directionY: 1,
+    speed: 34,
+    shotCooldown: 2.4,
+    shootTimer: 1.2
   });
 }

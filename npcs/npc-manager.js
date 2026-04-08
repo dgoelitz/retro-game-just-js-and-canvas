@@ -27,12 +27,14 @@ export function getNpcDialogue(npc, hasSword) {
   if (npc.id === "town-guide" && !hasSword) {
     return {
       text: FIRST_DIALOGUE_TEXT,
-      rewardSword: true
+      onComplete(session) {
+        session.inventory.hasSword = true;
+      }
     };
   }
 
   return {
     text: REPEAT_DIALOGUE_TEXT,
-    rewardSword: false
+    onComplete: null
   };
 }

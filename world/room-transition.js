@@ -1,4 +1,5 @@
 import { rectanglesOverlap } from "../game-utils.js";
+import { DOOR_WIDTH } from "./room-data.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;
 
@@ -37,38 +38,21 @@ export function handleWorldTransition(world, player, roomPropsByRoom, canvas, de
   pushPlayerOutOfEdgeBlockers(player, currentRoomProps, enteredFromEdge, canvas);
 }
 
-export function tryStartRoomTransition(player, world, canvas) {
+export function tryStartRoomTransition(session, canvas) {
+  const world = session.worldsByKey[session.activeWorldKey];
+  const player = session.player;
+
   if (world.transition) {
     return false;
   }
 
   const room = world.rooms[world.currentRoomIndex];
 
-  if (!room.walls.right && room.neighbors.right !== undefined && player.x >= canvas.width) {
-    startRoomTransition(world, room.neighbors.right, -1, 0);
-    player.x = 0;
-    return true;
+  if (room.doors) {
+    return tryStartDoorTransition(session, room, canvas);
   }
 
-  if (!room.walls.left && room.neighbors.left !== undefined && player.x + player.width <= 0) {
-    startRoomTransition(world, room.neighbors.left, 1, 0);
-    player.x = canvas.width - player.width;
-    return true;
-  }
-
-  if (!room.walls.top && room.neighbors.up !== undefined && player.y + player.height <= 0) {
-    startRoomTransition(world, room.neighbors.up, 0, 1);
-    player.y = canvas.height - player.height;
-    return true;
-  }
-
-  if (!room.walls.bottom && room.neighbors.down !== undefined && player.y >= canvas.height) {
-    startRoomTransition(world, room.neighbors.down, 0, -1);
-    player.y = 0;
-    return true;
-  }
-
-  return false;
+  return tryStartOpenEdgeTransition(player, world, canvas);
 }
 
 export function getRoomTransitionOffsets(world, canvas) {
@@ -90,7 +74,101 @@ export function getRoomTransitionOffsets(world, canvas) {
   };
 }
 
-function startRoomTransition(world, toRoomIndex, directionX, directionY) {
+function tryStartDoorTransition(session, room, canvas) {
+  const player = session.player;
+  const transitionChecks = [
+    { edge: "right", crossed: player.x >= canvas.width, directionX: -1, directionY: 0, resetPlayer() { player.x = 0; } },
+    { edge: "left", crossed: player.x + player.width <= 0, directionX: 1, directionY: 0, resetPlayer() { player.x = canvas.width - player.width; } },
+    { edge: "top", crossed: player.y + player.height <= 0, directionX: 0, directionY: 1, resetPlayer() { player.y = canvas.height - player.height; } },
+    { edge: "bottom", crossed: player.y >= canvas.height, directionX: 0, directionY: -1, resetPlayer() { player.y = 0; } }
+  ];
+
+  for (const check of transitionChecks) {
+    if (!check.crossed) {
+      continue;
+    }
+
+    const door = room.doors[check.edge];
+
+    if (!canUseDoor(session, door, canvas)) {
+      return false;
+    }
+
+    check.resetPlayer();
+    startRoomTransition(session, door.toRoomIndex, check.directionX, check.directionY);
+    return true;
+  }
+
+  return false;
+}
+
+function tryStartOpenEdgeTransition(player, world, canvas) {
+  const room = world.rooms[world.currentRoomIndex];
+
+  if (!room.walls.right && room.neighbors.right !== undefined && player.x >= canvas.width) {
+    startWorldTransition(world, room.neighbors.right, -1, 0);
+    player.x = 0;
+    return true;
+  }
+
+  if (!room.walls.left && room.neighbors.left !== undefined && player.x + player.width <= 0) {
+    startWorldTransition(world, room.neighbors.left, 1, 0);
+    player.x = canvas.width - player.width;
+    return true;
+  }
+
+  if (!room.walls.top && room.neighbors.up !== undefined && player.y + player.height <= 0) {
+    startWorldTransition(world, room.neighbors.up, 0, 1);
+    player.y = canvas.height - player.height;
+    return true;
+  }
+
+  if (!room.walls.bottom && room.neighbors.down !== undefined && player.y >= canvas.height) {
+    startWorldTransition(world, room.neighbors.down, 0, -1);
+    player.y = 0;
+    return true;
+  }
+
+  return false;
+}
+
+function canUseDoor(session, door, canvas) {
+  if (!door || door.toRoomIndex === null) {
+    return false;
+  }
+
+  if (!isPlayerAlignedWithDoor(session.player, door, canvas)) {
+    return false;
+  }
+
+  if (door.kind === "unlocked") {
+    return true;
+  }
+
+  if (door.kind === "key" && session.inventory.normalKeys > 0) {
+    session.inventory.normalKeys -= 1;
+    door.kind = "unlocked";
+    return true;
+  }
+
+  if (door.kind === "boss-key" && session.inventory.hasBossKey) {
+    door.kind = "unlocked";
+    return true;
+  }
+
+  return false;
+}
+
+function startRoomTransition(session, toRoomIndex, directionX, directionY) {
+  const world = session.worldsByKey[session.activeWorldKey];
+  startWorldTransition(world, toRoomIndex, directionX, directionY);
+
+  if (session.activeWorldKey === "dungeon") {
+    session.progress.dungeon.visitedRooms[toRoomIndex] = true;
+  }
+}
+
+function startWorldTransition(world, toRoomIndex, directionX, directionY) {
   world.transition = {
     fromRoomIndex: world.currentRoomIndex,
     toRoomIndex,
@@ -112,6 +190,14 @@ function getEnteredRoomEdge(completedTransition) {
     return "left";
   }
 
+  if (completedTransition.directionY > 0) {
+    return "bottom";
+  }
+
+  if (completedTransition.directionY < 0) {
+    return "top";
+  }
+
   return null;
 }
 
@@ -129,7 +215,74 @@ function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
     while (player.x > -player.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
       player.x -= step;
     }
+    return;
   }
+
+  if (edge === "top") {
+    while (player.y < canvas.height && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
+      player.y += step;
+    }
+    return;
+  }
+
+  if (edge === "bottom") {
+    while (player.y > -player.height && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
+      player.y -= step;
+    }
+  }
+}
+
+function isPlayerAlignedWithDoor(player, door, canvas) {
+  const doorBounds = getDoorBounds(door.edge, canvas);
+
+  if (door.edge === "left" || door.edge === "right") {
+    const playerCenterY = player.y + player.height / 2;
+
+    return playerCenterY >= doorBounds.y && playerCenterY <= doorBounds.y + doorBounds.height;
+  }
+
+  const playerCenterX = player.x + player.width / 2;
+
+  return playerCenterX >= doorBounds.x && playerCenterX <= doorBounds.x + doorBounds.width;
+}
+
+function getDoorBounds(edge, canvas) {
+  const horizontalDoorStart = Math.floor((canvas.width - DOOR_WIDTH) / 2);
+  const verticalDoorStart = Math.floor((canvas.height - DOOR_WIDTH) / 2);
+
+  if (edge === "top") {
+    return {
+      x: horizontalDoorStart,
+      y: 0,
+      width: DOOR_WIDTH,
+      height: 4
+    };
+  }
+
+  if (edge === "bottom") {
+    return {
+      x: horizontalDoorStart,
+      y: canvas.height - 4,
+      width: DOOR_WIDTH,
+      height: 4
+    };
+  }
+
+  if (edge === "left") {
+    return {
+      x: 0,
+      y: verticalDoorStart,
+      width: 4,
+      height: DOOR_WIDTH
+    };
+  }
+
+  return {
+    x: canvas.width - 4,
+    y: verticalDoorStart,
+    width: 4,
+    height: DOOR_WIDTH
+  };
 }
 
 function getEntityHitbox(entity) {

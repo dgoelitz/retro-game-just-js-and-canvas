@@ -1,15 +1,16 @@
 import { GAME_STATE_DIALOGUE, GAME_STATE_PLAYING } from "../game-state.js";
 import { DIALOGUE_CHARACTERS_PER_SECOND } from "./dialogue-config.js";
 
-export function startDialogue(session, dialoguePages, rewardSword) {
+export function startDialogue(session, dialoguePages, options = {}) {
   session.dialogue = {
     pages: dialoguePages,
     pageIndex: 0,
     visibleCharacters: 0,
-    rewardSword
+    onComplete: options.onComplete ?? null
   };
   session.mode = GAME_STATE_DIALOGUE;
   session.sword.active = false;
+  session.shield.active = false;
 }
 
 export function advanceDialogue(session, input) {
@@ -35,8 +36,8 @@ export function advanceDialogue(session, input) {
     return;
   }
 
-  if (session.dialogue.rewardSword) {
-    session.hasSword = true;
+  if (session.dialogue.onComplete) {
+    session.dialogue.onComplete(session);
   }
 
   session.dialogue = null;

@@ -1,4 +1,5 @@
 import { tickTimer, ZERO_OFFSET } from "../game-utils.js";
+import { renderShield, updateShield } from "./shield.js";
 import { renderSword, updateSword } from "./sword.js";
 
 const PLAYER_COLOR = "#ffcc00";
@@ -19,40 +20,56 @@ export function createPlayer() {
   };
 }
 
-export function updatePlayer(player, sword, input, deltaTime, canAttack = true) {
+export function updatePlayer(player, sword, shield, input, deltaTime, canAttack = true, canUseShield = false) {
   tickTimer(player, "invulnerableTimer", deltaTime);
   const movementStep = player.speed * deltaTime;
+  updateShield(shield, input, canUseShield);
+
+  if (shield.active) {
+    sword.active = false;
+  }
+
+  const canChangeFacing = !shield.active;
 
   if (input.left) {
     player.x -= movementStep;
-    player.facing = "left";
+    if (canChangeFacing) {
+      player.facing = "left";
+    }
   }
 
   if (input.right) {
     player.x += movementStep;
-    player.facing = "right";
+    if (canChangeFacing) {
+      player.facing = "right";
+    }
   }
 
   if (input.up) {
     player.y -= movementStep;
-    player.facing = "up";
+    if (canChangeFacing) {
+      player.facing = "up";
+    }
   }
 
   if (input.down) {
     player.y += movementStep;
-    player.facing = "down";
+    if (canChangeFacing) {
+      player.facing = "down";
+    }
   }
 
-  updateSword(player, sword, input, deltaTime, canAttack);
+  updateSword(player, sword, input, deltaTime, canAttack && !shield.active);
 }
 
-export function renderPlayer(ctx, player, sword, offset = ZERO_OFFSET) {
+export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
   const drawPlayer = getDrawPlayer(player);
 
   if (isPlayerHiddenDuringFlash(player)) {
     return;
   }
 
+  renderShield(ctx, drawPlayer, shield, offset);
   ctx.fillStyle = PLAYER_COLOR;
   ctx.fillRect(drawPlayer.x + offset.x, drawPlayer.y + offset.y, drawPlayer.width, drawPlayer.height);
   renderSword(ctx, drawPlayer, sword, offset);

@@ -1,22 +1,39 @@
 import { createInput } from "./input.js";
 import { advanceDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
-import { hitEnemy, renderEnemy, touchesEnemy, updateEnemy } from "./enemies/enemy.js";
+import { damagePlayerFromProjectiles, renderProjectiles, updateProjectiles } from "./combat/projectiles.js";
+import { handleDungeonRoomEntry, updateDungeonRoomRules } from "./dungeon/dungeon-rules.js";
 import {
+  blockEnemyWithShield,
+  hitEnemy,
+  renderEnemy,
+  resolveProjectileHitsOnEnemies,
+  touchesEnemy,
+  updateEnemy
+} from "./enemies/enemy.js";
+import {
+  applyDebugStart,
   createGameSession,
   GAME_STATE_DIALOGUE,
   GAME_STATE_GAME_OVER,
+  GAME_STATE_MAP,
+  GAME_STATE_PLAYING,
   getActiveEnemiesByRoom,
   getActiveNpcsByRoom,
+  getActiveProjectilesByRoom,
   getActiveRoomPropsByRoom,
   getActiveWorld,
-  resetGameSession,
+  getDungeonRespawnDestination,
+  getOverworldRespawnDestination,
+  respawnAfterGameOver,
+  setGameOverDestination,
   travelToDestination
 } from "./game-state.js";
 import { renderNpc } from "./npcs/npc.js";
 import { resolveNpcCollisions, tryTalkToNearbyNpc } from "./npcs/npc-interaction.js";
 import {
-  findRoomPortal,
   hitRoomProps,
+  hitTargetProps,
+  interactWithRoomProps,
   renderRoomProp,
   resolveRoomPropCollisions
 } from "./world/room-props.js";
@@ -25,25 +42,34 @@ import {
   handleWorldTransition,
   isTransitioning,
   renderWorld,
+  resolveRoomGeometryCollisions,
   tryStartRoomTransition
 } from "./world/world.js";
 import {
   damagePlayer,
   getPlayerHitbox,
+  getPlayerPosition,
   renderPlayer,
   renderPlayerHealth,
   updatePlayer
 } from "./player/player.js";
+import { getShieldHitbox } from "./player/shield.js";
 import { getAttackHitbox } from "./player/sword.js";
 import { renderDialogueBox } from "./ui/dialogue-box.js";
 import { renderGameOverScreen } from "./ui/game-over-screen.js";
+import { renderMapScreen } from "./ui/map-screen.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const input = createInput();
 const session = createGameSession();
+const debugStartKey = window.location.hash.replace("#", "");
 
 ctx.imageSmoothingEnabled = false;
+
+if (debugStartKey) {
+  applyDebugStart(session, debugStartKey);
+}
 
 let lastTime = 0;
 
@@ -52,17 +78,26 @@ function render() {
   const activeEnemiesByRoom = getActiveEnemiesByRoom(session);
   const activeNpcsByRoom = getActiveNpcsByRoom(session);
   const activeRoomPropsByRoom = getActiveRoomPropsByRoom(session);
+  const activeProjectilesByRoom = getActiveProjectilesByRoom(session);
+
+  if (session.mode === GAME_STATE_MAP) {
+    renderMapScreen(ctx, canvas, activeWorld, session.inventory, session.progress.dungeon);
+    return;
+  }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   renderWorld(ctx, activeWorld, canvas, (roomIndex, offset) => {
     const roomEnemies = activeEnemiesByRoom[roomIndex] ?? [];
+    const roomProjectiles = activeProjectilesByRoom[roomIndex] ?? [];
     const roomNpcs = activeNpcsByRoom[roomIndex] ?? [];
     const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
 
     for (const enemy of roomEnemies) {
       renderEnemy(ctx, enemy, offset);
     }
+
+    renderProjectiles(ctx, roomProjectiles, offset);
 
     for (const prop of roomProps) {
       renderRoomProp(ctx, prop, offset);
@@ -73,7 +108,7 @@ function render() {
     }
 
     if (roomIndex === activeWorld.currentRoomIndex) {
-      renderPlayer(ctx, session.player, session.sword, offset);
+      renderPlayer(ctx, session.player, session.sword, session.shield, offset);
     }
   });
 
@@ -89,15 +124,18 @@ function render() {
 function gameLoop(timestamp) {
   const deltaTime = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
+
   const activeWorld = getActiveWorld(session);
   const activeEnemiesByRoom = getActiveEnemiesByRoom(session);
   const activeNpcsByRoom = getActiveNpcsByRoom(session);
   const activeRoomPropsByRoom = getActiveRoomPropsByRoom(session);
+  const activeProjectilesByRoom = getActiveProjectilesByRoom(session);
 
   if (session.mode === GAME_STATE_GAME_OVER) {
-    if (input.attack) {
-      resetGameSession(session);
+    if (input.attack || input.interact) {
+      respawnAfterGameOver(session);
       input.attack = false;
+      input.interact = false;
     }
   } else if (session.mode === GAME_STATE_DIALOGUE) {
     updateDialogue(session.dialogue, deltaTime);
@@ -105,45 +143,97 @@ function gameLoop(timestamp) {
     if (input.attack || input.interact) {
       advanceDialogue(session, input);
     }
+  } else if (session.mode === GAME_STATE_MAP) {
+    if (input.map) {
+      session.mode = GAME_STATE_PLAYING;
+      input.map = false;
+    }
   } else if (isTransitioning(activeWorld)) {
     handleWorldTransition(activeWorld, session.player, activeRoomPropsByRoom, canvas, deltaTime);
   } else {
-    const previousPlayerPosition = {
-      x: session.player.x,
-      y: session.player.y
-    };
-    updatePlayer(session.player, session.sword, input, deltaTime, session.hasSword);
+    if (input.map && session.activeWorldKey === "dungeon") {
+      session.mode = GAME_STATE_MAP;
+      input.map = false;
+      render();
+      requestAnimationFrame(gameLoop);
+      return;
+    }
 
-    const roomNpcs = activeNpcsByRoom[activeWorld.currentRoomIndex] ?? [];
-    const roomProps = activeRoomPropsByRoom[activeWorld.currentRoomIndex] ?? [];
+    handleDungeonRoomEntry(session, ctx, canvas);
+
+    if (session.mode !== GAME_STATE_PLAYING) {
+      render();
+      requestAnimationFrame(gameLoop);
+      return;
+    }
+
+    const previousPlayerPosition = getPlayerPosition(session.player);
+    const roomIndex = activeWorld.currentRoomIndex;
+    const roomEnemies = activeEnemiesByRoom[roomIndex] ?? [];
+    const roomNpcs = activeNpcsByRoom[roomIndex] ?? [];
+    const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
+    const roomProjectiles = getRoomProjectiles(activeProjectilesByRoom, roomIndex);
+
+    updatePlayer(
+      session.player,
+      session.sword,
+      session.shield,
+      input,
+      deltaTime,
+      session.inventory.hasSword,
+      session.inventory.hasShield
+    );
+
+    resolveRoomGeometryCollisions(session.player, previousPlayerPosition, activeWorld);
     resolveNpcCollisions(session.player, previousPlayerPosition, roomNpcs);
     resolveRoomPropCollisions(session.player, previousPlayerPosition, roomProps);
 
-    if (!tryStartRoomTransition(session.player, activeWorld, canvas)) {
+    if (!tryStartRoomTransition(session, canvas)) {
       constrainPlayerToRoom(session.player, activeWorld, canvas);
+    } else {
+      activeProjectilesByRoom[roomIndex] = [];
+      render();
+      requestAnimationFrame(gameLoop);
+      return;
     }
 
-    const attackHitbox = getAttackHitbox(session.player, session.sword);
-    hitRoomProps(roomProps, attackHitbox);
-    const currentPlayerHitbox = getPlayerHitbox(session.player);
-    const roomEnemies = activeEnemiesByRoom[activeWorld.currentRoomIndex] ?? [];
+    for (const enemy of roomEnemies) {
+      updateEnemy(enemy, session.player, deltaTime, canvas, roomProjectiles, roomEnemies);
+      hitEnemy(enemy, getAttackHitbox(session.player, session.sword));
+    }
+
+    updateProjectiles(roomProjectiles, deltaTime, canvas);
+    resolveProjectileHitsOnEnemies(roomEnemies, roomProjectiles);
+    hitTargetProps(roomProps, roomProjectiles);
+    hitRoomProps(roomProps, getAttackHitbox(session.player, session.sword));
+
+    const playerHitbox = getPlayerHitbox(session.player);
+    const shieldHitbox = getShieldHitbox(session.player, session.shield);
 
     for (const enemy of roomEnemies) {
-      updateEnemy(enemy, session.player, deltaTime, canvas);
-      hitEnemy(enemy, attackHitbox);
-      if (touchesEnemy(enemy, currentPlayerHitbox)) {
+      if (blockEnemyWithShield(enemy, shieldHitbox, session.player.facing)) {
+        continue;
+      }
+
+      if (touchesEnemy(enemy, playerHitbox)) {
         damagePlayer(session.player);
       }
     }
 
+    if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldHitbox)) {
+      damagePlayer(session.player);
+    }
+
+    updateDungeonRoomRules(session, ctx, canvas);
+
     if (input.interact) {
-      const talkedToNpc = tryTalkToNearbyNpc(session, roomNpcs, ctx, canvas, currentPlayerHitbox);
+      const talkedToNpc = tryTalkToNearbyNpc(session, roomNpcs, ctx, canvas, playerHitbox);
 
       if (!talkedToNpc) {
-        const destination = findRoomPortal(roomProps, currentPlayerHitbox);
+        const interaction = interactWithRoomProps(session, roomProps, playerHitbox, ctx, canvas);
 
-        if (destination) {
-          travelToDestination(session, destination);
+        if (interaction.destination) {
+          travelToDestination(session, interaction.destination);
         }
       }
 
@@ -153,12 +243,29 @@ function gameLoop(timestamp) {
     if (session.player.health === 0) {
       session.mode = GAME_STATE_GAME_OVER;
       session.sword.active = false;
+      session.shield.active = false;
+
+      if (session.activeWorldKey === "dungeon") {
+        setGameOverDestination(session, getDungeonRespawnDestination());
+      } else {
+        setGameOverDestination(session, getOverworldRespawnDestination());
+      }
     }
+
+    input.map = false;
   }
 
   render();
 
   requestAnimationFrame(gameLoop);
+}
+
+function getRoomProjectiles(projectilesByRoom, roomIndex) {
+  if (!projectilesByRoom[roomIndex]) {
+    projectilesByRoom[roomIndex] = [];
+  }
+
+  return projectilesByRoom[roomIndex];
 }
 
 requestAnimationFrame(gameLoop);

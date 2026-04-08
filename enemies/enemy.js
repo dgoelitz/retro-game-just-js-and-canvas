@@ -1,12 +1,28 @@
 import { clampToCanvas, rectanglesOverlap, tickTimer, ZERO_OFFSET } from "../game-utils.js";
+import { createProjectile } from "../combat/projectiles.js";
 
-const ENEMY_COLOR = "#e43636";
+const ENEMY_COLOR_BY_TYPE = {
+  patrol: "#e43636",
+  turret: "#94b0c2",
+  "fixed-turret": "#c2c3c7",
+  stone: "#7e7f82",
+  snake: "#00a84f",
+  miniboss: "#ff77a8",
+  boss: "#ff004d"
+};
+
 const ENEMY_MODE_PATROL = "patrol";
 const ENEMY_MODE_CHASE = "chase";
 const ENEMY_MODE_RETURN = "return";
+const MINIBOSS_MODE_THROW = "throw";
+const MINIBOSS_MODE_SPIN = "spin";
+const MINIBOSS_MODE_REST = "rest";
+const BOSS_MODE_SLAM = "slam";
+const BOSS_MODE_STUNNED = "stunned";
 
 export function createEnemy(overrides = {}) {
   return {
+    type: "patrol",
     x: 100,
     y: 48,
     homeX: 100,
@@ -22,20 +38,179 @@ export function createEnemy(overrides = {}) {
     patrolMinX: 88,
     patrolMaxX: 112,
     directionX: 1,
+    directionY: 1,
     chaseRange: 36,
     mode: ENEMY_MODE_PATROL,
+    orbitAngle: 0,
+    orbitSpeed: 1.2,
+    orbitRadiusX: 10,
+    orbitRadiusY: 10,
+    shootTimer: 0,
+    shotCooldown: 1.2,
+    fixedDirection: "down",
+    abilityTimer: 0,
+    phaseDuration: 0,
+    bounceCount: 0,
+    slamAxis: "horizontal",
+    slamWall: "top",
+    speed: 34,
     alive: true,
+    invincible: false,
+    nonBlocking: false,
     ...overrides
   };
 }
 
-export function updateEnemy(enemy, player, deltaTime, canvas) {
+export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomEnemies) {
   tickTimer(enemy, "invulnerableTimer", deltaTime);
 
   if (!enemy.alive) {
     return;
   }
 
+  if (enemy.type === "patrol") {
+    updatePatrolEnemy(enemy, player, deltaTime, canvas);
+    return;
+  }
+
+  if (enemy.type === "turret") {
+    updateTurretEnemy(enemy, player, deltaTime, projectiles);
+    return;
+  }
+
+  if (enemy.type === "fixed-turret") {
+    updateFixedTurretEnemy(enemy, deltaTime, projectiles);
+    return;
+  }
+
+  if (enemy.type === "stone") {
+    updateOrbitEnemy(enemy, deltaTime, 0.9);
+    return;
+  }
+
+  if (enemy.type === "snake") {
+    updateOrbitEnemy(enemy, deltaTime, 0.5);
+    return;
+  }
+
+  if (enemy.type === "miniboss") {
+    updateMiniboss(enemy, player, deltaTime, canvas, projectiles);
+    return;
+  }
+
+  if (enemy.type === "boss") {
+    updateBoss(enemy, player, deltaTime, canvas, projectiles, roomEnemies);
+  }
+}
+
+export function hitEnemy(enemy, attackHitbox) {
+  if (!enemy.alive || !attackHitbox || enemy.invulnerableTimer > 0) {
+    return;
+  }
+
+  if (!rectanglesOverlap(enemy, attackHitbox)) {
+    return;
+  }
+
+  if (enemy.type === "turret" || enemy.type === "fixed-turret" || enemy.type === "stone" || enemy.type === "snake") {
+    return;
+  }
+
+  if (enemy.type === "miniboss" && enemy.mode !== MINIBOSS_MODE_REST) {
+    return;
+  }
+
+  if (enemy.type === "boss" && enemy.mode !== BOSS_MODE_STUNNED) {
+    return;
+  }
+
+  applyEnemyDamage(enemy, 1);
+}
+
+export function resolveProjectileHitsOnEnemies(roomEnemies, projectiles) {
+  for (const projectile of projectiles) {
+    if (!projectile.active) {
+      continue;
+    }
+
+    for (const enemy of roomEnemies) {
+      if (!enemy.alive || !rectanglesOverlap(enemy, projectile)) {
+        continue;
+      }
+
+      if (enemy.type === "fixed-turret" && projectile.deflected) {
+        enemy.alive = false;
+        projectile.active = false;
+        break;
+      }
+
+      if (enemy.type === "stone") {
+        enemy.alive = false;
+        projectile.active = false;
+        break;
+      }
+
+      if (enemy.type === "boss" && projectile.deflected) {
+        projectile.active = false;
+        enemy.mode = BOSS_MODE_STUNNED;
+        enemy.abilityTimer = 2.1;
+        enemy.invulnerableTimer = 0;
+        break;
+      }
+    }
+  }
+}
+
+export function touchesEnemy(enemy, hitbox) {
+  if (!enemy.alive || !hitbox) {
+    return false;
+  }
+
+  return rectanglesOverlap(enemy, hitbox);
+}
+
+export function blockEnemyWithShield(enemy, shieldHitbox, playerFacing) {
+  if (!enemy.alive || enemy.type !== "patrol" || !shieldHitbox || !rectanglesOverlap(enemy, shieldHitbox)) {
+    return false;
+  }
+
+  if (playerFacing === "left") {
+    enemy.x = shieldHitbox.x - enemy.width;
+  } else if (playerFacing === "right") {
+    enemy.x = shieldHitbox.x + shieldHitbox.width;
+  } else if (playerFacing === "up") {
+    enemy.y = shieldHitbox.y - enemy.height;
+  } else {
+    enemy.y = shieldHitbox.y + shieldHitbox.height;
+  }
+
+  return true;
+}
+
+export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
+  if (!enemy.alive || isEnemyHiddenDuringFlash(enemy)) {
+    return;
+  }
+
+  const drawEnemy = getDrawEnemy(enemy);
+  const color = ENEMY_COLOR_BY_TYPE[enemy.type] ?? ENEMY_COLOR_BY_TYPE.patrol;
+
+  ctx.fillStyle = color;
+
+  if (enemy.type === "miniboss" && enemy.mode === MINIBOSS_MODE_SPIN) {
+    ctx.fillRect(drawEnemy.x + offset.x - 2, drawEnemy.y + offset.y - 2, drawEnemy.width + 4, drawEnemy.height + 4);
+    return;
+  }
+
+  if (enemy.type === "boss") {
+    ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
+    return;
+  }
+
+  ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
+}
+
+function updatePatrolEnemy(enemy, player, deltaTime, canvas) {
   if (isPlayerInChaseRange(enemy, player)) {
     enemy.mode = ENEMY_MODE_CHASE;
   } else if (enemy.mode === ENEMY_MODE_CHASE) {
@@ -53,47 +228,208 @@ export function updateEnemy(enemy, player, deltaTime, canvas) {
   clampToCanvas(enemy, canvas);
 }
 
-export function hitEnemy(enemy, attackHitbox) {
-  if (!enemy.alive || !attackHitbox) {
+function updateTurretEnemy(enemy, player, deltaTime, projectiles) {
+  tickTimer(enemy, "shootTimer", deltaTime);
+
+  if (enemy.shootTimer > 0) {
     return;
   }
 
-  if (enemy.invulnerableTimer > 0) {
+  enemy.shootTimer = enemy.shotCooldown;
+  const velocity = getVelocityTowardPlayer(enemy, player, 42);
+
+  projectiles.push(createProjectile({
+    kind: "bullet",
+    x: enemy.x + 2,
+    y: enemy.y + 2,
+    velocityX: velocity.x,
+    velocityY: velocity.y
+  }));
+}
+
+function updateFixedTurretEnemy(enemy, deltaTime, projectiles) {
+  tickTimer(enemy, "shootTimer", deltaTime);
+
+  if (enemy.shootTimer > 0) {
     return;
   }
 
-  if (overlapsEnemy(enemy, attackHitbox)) {
-    enemy.health -= 1;
-    enemy.invulnerableTimer = enemy.invulnerableDuration;
+  enemy.shootTimer = enemy.shotCooldown;
+  const velocity = getDirectionVelocity(enemy.fixedDirection, 46);
 
-    if (enemy.health <= 0) {
-      enemy.health = 0;
-      enemy.alive = false;
+  projectiles.push(createProjectile({
+    kind: "bullet",
+    x: enemy.x + 2,
+    y: enemy.y + 2,
+    velocityX: velocity.x,
+    velocityY: velocity.y
+  }));
+}
+
+function updateOrbitEnemy(enemy, deltaTime, speedMultiplier) {
+  enemy.orbitAngle += enemy.orbitSpeed * speedMultiplier * deltaTime;
+  enemy.x = enemy.homeX + Math.cos(enemy.orbitAngle) * enemy.orbitRadiusX;
+  enemy.y = enemy.homeY + Math.sin(enemy.orbitAngle) * enemy.orbitRadiusY;
+}
+
+function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
+  enemy.abilityTimer += deltaTime;
+
+  if (enemy.mode === MINIBOSS_MODE_THROW) {
+    tickTimer(enemy, "shootTimer", deltaTime);
+
+    if (enemy.shootTimer === 0) {
+      enemy.shootTimer = enemy.shotCooldown;
+      projectiles.push(createProjectile({
+        kind: "sword-projectile",
+        x: clampValue(player.x + 2, 4, canvas.width - 8),
+        y: 4,
+        width: 4,
+        height: 8,
+        velocityX: 0,
+        velocityY: 52
+      }));
+    }
+
+    if (enemy.abilityTimer >= 3.2) {
+      enemy.mode = MINIBOSS_MODE_SPIN;
+      enemy.abilityTimer = 0;
+      enemy.directionX = Math.random() > 0.5 ? 1 : -1;
+      enemy.directionY = Math.random() > 0.5 ? 1 : -1;
+    }
+
+    return;
+  }
+
+  if (enemy.mode === MINIBOSS_MODE_SPIN) {
+    enemy.x += enemy.directionX * 24 * deltaTime;
+    enemy.y += enemy.directionY * 24 * deltaTime;
+
+    if (enemy.x <= 4 || enemy.x + enemy.width >= canvas.width - 4) {
+      enemy.directionX *= -1;
+    }
+
+    if (enemy.y <= 4 || enemy.y + enemy.height >= canvas.height - 4) {
+      enemy.directionY *= -1;
+    }
+
+    if (enemy.abilityTimer >= 2.2) {
+      enemy.mode = MINIBOSS_MODE_REST;
+      enemy.abilityTimer = 0;
+      enemy.x = canvas.width / 2 - enemy.width / 2;
+      enemy.y = 18;
+    }
+
+    return;
+  }
+
+  if (enemy.abilityTimer >= 1.6) {
+    enemy.mode = MINIBOSS_MODE_THROW;
+    enemy.abilityTimer = 0;
+    enemy.shootTimer = 0;
+  }
+}
+
+function updateBoss(enemy, player, deltaTime, canvas, projectiles) {
+  if (enemy.mode === BOSS_MODE_STUNNED) {
+    tickTimer(enemy, "abilityTimer", deltaTime);
+
+    if (enemy.abilityTimer === 0) {
+      enemy.mode = BOSS_MODE_SLAM;
+    }
+
+    return;
+  }
+
+  const slamSpeed = getBossSlamSpeed(enemy);
+
+  if (enemy.slamAxis === "horizontal") {
+    enemy.x += enemy.directionX * slamSpeed * deltaTime;
+    enemy.y = enemy.slamWall === "top" ? 4 : canvas.height - enemy.height - 4;
+
+    if (enemy.x <= 4 || enemy.x + enemy.width >= canvas.width - 4) {
+      enemy.directionX *= -1;
+      enemy.bounceCount += 1;
+    }
+  } else {
+    enemy.y += enemy.directionY * slamSpeed * deltaTime;
+    enemy.x = enemy.slamWall === "left" ? 4 : canvas.width - enemy.width - 4;
+
+    if (enemy.y <= 4 || enemy.y + enemy.height >= canvas.height - 4) {
+      enemy.directionY *= -1;
+      enemy.bounceCount += 1;
     }
   }
+
+  tickTimer(enemy, "shootTimer", deltaTime);
+
+  if (enemy.shootTimer === 0) {
+    spawnBossVolley(enemy, player, projectiles, canvas);
+    enemy.shootTimer = 2.2;
+  }
+
+  if (enemy.bounceCount >= 3) {
+    enemy.bounceCount = 0;
+    enemy.slamAxis = enemy.slamAxis === "horizontal" ? "vertical" : "horizontal";
+    enemy.slamWall = getNextBossWall(enemy.slamAxis);
+  }
 }
 
-export function touchesEnemy(enemy, hitbox) {
-  if (!enemy.alive || !hitbox) {
-    return false;
-  }
+function spawnBossVolley(enemy, player, projectiles, canvas) {
+  const projectileCount = enemy.health <= 2 ? 3 : enemy.health <= 5 ? 2 : 1;
 
-  return overlapsEnemy(enemy, hitbox);
+  for (let i = 0; i < projectileCount; i += 1) {
+    const spawn = getBossProjectileSpawn(enemy.slamAxis, canvas, i, projectileCount);
+    const velocity = getVelocityTowardPoint(spawn, getCenter(player), 38);
+
+    projectiles.push(createProjectile({
+      kind: "bullet",
+      x: spawn.x,
+      y: spawn.y,
+      velocityX: velocity.x,
+      velocityY: velocity.y
+    }));
+  }
 }
 
-export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
-  if (!enemy.alive) {
-    return;
+function getBossProjectileSpawn(slamAxis, canvas, index, projectileCount) {
+  const spacing = canvas.width / (projectileCount + 1);
+
+  if (slamAxis === "horizontal") {
+    return {
+      x: spacing * (index + 1),
+      y: canvas.height / 2
+    };
   }
 
-  if (isEnemyHiddenDuringFlash(enemy)) {
-    return;
+  return {
+    x: canvas.width / 2,
+    y: (canvas.height / (projectileCount + 1)) * (index + 1)
+  };
+}
+
+function getBossSlamSpeed(enemy) {
+  const nearWallBoost = 1 + enemy.bounceCount * 0.15;
+
+  return enemy.speed * nearWallBoost;
+}
+
+function getNextBossWall(slamAxis) {
+  if (slamAxis === "horizontal") {
+    return Math.random() > 0.5 ? "top" : "bottom";
   }
 
-  const drawEnemy = getDrawEnemy(enemy);
+  return Math.random() > 0.5 ? "left" : "right";
+}
 
-  ctx.fillStyle = ENEMY_COLOR;
-  ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
+function applyEnemyDamage(enemy, amount) {
+  enemy.health -= amount;
+  enemy.invulnerableTimer = enemy.invulnerableDuration;
+
+  if (enemy.health <= 0) {
+    enemy.health = 0;
+    enemy.alive = false;
+  }
 }
 
 function isEnemyHiddenDuringFlash(enemy) {
@@ -158,10 +494,6 @@ function returnHome(enemy, deltaTime) {
   enemy.y += (distanceY / distanceToHome) * returnStep;
 }
 
-function overlapsEnemy(enemy, hitbox) {
-  return rectanglesOverlap(enemy, hitbox);
-}
-
 function getDrawEnemy(enemy) {
   return {
     x: Math.round(enemy.x),
@@ -190,4 +522,39 @@ function moveToward(enemy, target, step) {
 
   enemy.x += (distanceX / distanceToTarget) * step;
   enemy.y += (distanceY / distanceToTarget) * step;
+}
+
+function getVelocityTowardPlayer(enemy, player, speed) {
+  return getVelocityTowardPoint(getCenter(enemy), getCenter(player), speed);
+}
+
+function getVelocityTowardPoint(from, to, speed) {
+  const distanceX = to.x - from.x;
+  const distanceY = to.y - from.y;
+  const distance = Math.hypot(distanceX, distanceY) || 1;
+
+  return {
+    x: (distanceX / distance) * speed,
+    y: (distanceY / distance) * speed
+  };
+}
+
+function getDirectionVelocity(direction, speed) {
+  if (direction === "left") {
+    return { x: -speed, y: 0 };
+  }
+
+  if (direction === "right") {
+    return { x: speed, y: 0 };
+  }
+
+  if (direction === "up") {
+    return { x: 0, y: -speed };
+  }
+
+  return { x: 0, y: speed };
+}
+
+function clampValue(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }

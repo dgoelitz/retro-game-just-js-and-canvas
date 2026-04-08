@@ -5,10 +5,25 @@ export function createInput() {
     up: false,
     down: false,
     attack: false,
-    interact: false
+    interact: false,
+    shield: false,
+    map: false
   };
 
-  const blockedKeys = ["arrowleft", "arrowright", "arrowup", "arrowdown", "a", "d", "w", "s", " ", "enter"];
+  const blockedKeys = [
+    "arrowleft",
+    "arrowright",
+    "arrowup",
+    "arrowdown",
+    "a",
+    "d",
+    "w",
+    "s",
+    " ",
+    "enter",
+    "shift",
+    "tab"
+  ];
 
   window.addEventListener("keydown", (event) => {
     const key = event.key.toLowerCase();
@@ -23,6 +38,8 @@ export function createInput() {
     if (key === "arrowdown" || key === "s") input.down = true;
     if (key === " " && !event.repeat) input.attack = true;
     if (key === "enter" && !event.repeat) input.interact = true;
+    if (key === "shift") input.shield = true;
+    if (key === "tab" && !event.repeat) input.map = true;
   });
 
   window.addEventListener("keyup", (event) => {
@@ -32,6 +49,7 @@ export function createInput() {
     if (key === "arrowright" || key === "d") input.right = false;
     if (key === "arrowup" || key === "w") input.up = false;
     if (key === "arrowdown" || key === "s") input.down = false;
+    if (key === "shift") input.shield = false;
   });
 
   return input;

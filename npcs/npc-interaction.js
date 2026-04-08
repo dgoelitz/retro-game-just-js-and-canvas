@@ -40,9 +40,11 @@ export function tryTalkToNearbyNpc(session, roomNpcs, ctx, canvas, playerHitbox)
       continue;
     }
 
-    const dialogueData = getNpcDialogue(npc, session.hasSword);
+    const dialogueData = getNpcDialogue(npc, session.inventory.hasSword);
     const dialoguePages = createDialoguePages(ctx, canvas, dialogueData.text);
-    startDialogue(session, dialoguePages, dialogueData.rewardSword);
+    startDialogue(session, dialoguePages, {
+      onComplete: dialogueData.onComplete
+    });
     return true;
   }
 
