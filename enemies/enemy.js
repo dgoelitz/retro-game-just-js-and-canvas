@@ -18,6 +18,7 @@ const MINIBOSS_MODE_THROW = "throw";
 const MINIBOSS_MODE_SPIN = "spin";
 const MINIBOSS_MODE_REST = "rest";
 const BOSS_MODE_SLAM = "slam";
+const BOSS_MODE_IMPACT = "impact";
 const BOSS_MODE_STUNNED = "stunned";
 
 export function createEnemy(overrides = {}) {
@@ -47,13 +48,17 @@ export function createEnemy(overrides = {}) {
     orbitRadiusY: 10,
     shootTimer: 0,
     shotCooldown: 1.2,
+    spawnCooldown: 3,
     fixedDirection: "down",
     abilityTimer: 0,
     phaseDuration: 0,
     bounceCount: 0,
     slamAxis: "horizontal",
     slamWall: "top",
-    speed: 34,
+    speed: 66,
+    impactPauseDuration: 0.22,
+    bossTurretCount: 1,
+    bossSummoned: false,
     alive: true,
     invincible: false,
     nonBlocking: false,
@@ -99,7 +104,7 @@ export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomE
   }
 
   if (enemy.type === "boss") {
-    updateBoss(enemy, player, deltaTime, canvas, projectiles, roomEnemies);
+    updateBoss(enemy, player, deltaTime, canvas, roomEnemies);
   }
 }
 
@@ -155,6 +160,8 @@ export function resolveProjectileHitsOnEnemies(roomEnemies, projectiles) {
         enemy.mode = BOSS_MODE_STUNNED;
         enemy.abilityTimer = 2.1;
         enemy.invulnerableTimer = 0;
+        enemy.shootTimer = enemy.spawnCooldown;
+        removeBossTurrets(roomEnemies);
         break;
       }
     }
@@ -330,7 +337,17 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
   }
 }
 
-function updateBoss(enemy, player, deltaTime, canvas, projectiles) {
+function updateBoss(enemy, player, deltaTime, canvas, roomEnemies) {
+  if (enemy.mode === BOSS_MODE_IMPACT) {
+    tickTimer(enemy, "abilityTimer", deltaTime);
+
+    if (enemy.abilityTimer === 0) {
+      enemy.mode = BOSS_MODE_SLAM;
+    }
+
+    return;
+  }
+
   if (enemy.mode === BOSS_MODE_STUNNED) {
     tickTimer(enemy, "abilityTimer", deltaTime);
 
@@ -341,85 +358,94 @@ function updateBoss(enemy, player, deltaTime, canvas, projectiles) {
     return;
   }
 
-  const slamSpeed = getBossSlamSpeed(enemy);
+  const slamSpeed = getBossSlamSpeed(enemy, canvas);
 
   if (enemy.slamAxis === "horizontal") {
     enemy.x += enemy.directionX * slamSpeed * deltaTime;
     enemy.y = enemy.slamWall === "top" ? 4 : canvas.height - enemy.height - 4;
 
     if (enemy.x <= 4 || enemy.x + enemy.width >= canvas.width - 4) {
+      enemy.x = enemy.directionX < 0 ? 4 : canvas.width - enemy.width - 4;
       enemy.directionX *= -1;
       enemy.bounceCount += 1;
+      startBossImpactPause(enemy);
     }
   } else {
     enemy.y += enemy.directionY * slamSpeed * deltaTime;
     enemy.x = enemy.slamWall === "left" ? 4 : canvas.width - enemy.width - 4;
 
     if (enemy.y <= 4 || enemy.y + enemy.height >= canvas.height - 4) {
+      enemy.y = enemy.directionY < 0 ? 4 : canvas.height - enemy.height - 4;
       enemy.directionY *= -1;
       enemy.bounceCount += 1;
+      startBossImpactPause(enemy);
     }
   }
 
   tickTimer(enemy, "shootTimer", deltaTime);
 
-  if (enemy.shootTimer === 0) {
-    spawnBossVolley(enemy, player, projectiles, canvas);
-    enemy.shootTimer = 2.2;
+  if (enemy.shootTimer === 0 && countBossTurrets(roomEnemies) === 0) {
+    spawnBossTurrets(enemy, roomEnemies, canvas);
+    enemy.shootTimer = enemy.spawnCooldown;
   }
 
   if (enemy.bounceCount >= 3) {
     enemy.bounceCount = 0;
-    enemy.slamAxis = enemy.slamAxis === "horizontal" ? "vertical" : "horizontal";
-    enemy.slamWall = getNextBossWall(enemy.slamAxis);
+    switchBossWall(enemy, canvas);
+    repositionBossTurrets(enemy, roomEnemies, canvas);
   }
 }
 
-function spawnBossVolley(enemy, player, projectiles, canvas) {
-  const projectileCount = enemy.health <= 2 ? 3 : enemy.health <= 5 ? 2 : 1;
+function spawnBossTurrets(enemy, roomEnemies, canvas) {
+  const bossTurretCount = getBossTurretCount(enemy);
+  const turretPositions = getBossTurretPositions(enemy, canvas, bossTurretCount);
 
-  for (let i = 0; i < projectileCount; i += 1) {
-    const spawn = getBossProjectileSpawn(enemy.slamAxis, canvas, i, projectileCount);
-    const velocity = getVelocityTowardPoint(spawn, getCenter(player), 38);
-
-    projectiles.push(createProjectile({
-      kind: "bullet",
-      x: spawn.x,
-      y: spawn.y,
-      velocityX: velocity.x,
-      velocityY: velocity.y
+  for (const turretPosition of turretPositions) {
+    roomEnemies.push(createEnemy({
+      type: "turret",
+      x: turretPosition.x,
+      y: turretPosition.y,
+      width: 8,
+      height: 8,
+      health: 1,
+      invincible: true,
+      shotCooldown: 1.1,
+      shootTimer: 0.55,
+      bossSummoned: true
     }));
   }
 }
 
-function getBossProjectileSpawn(slamAxis, canvas, index, projectileCount) {
-  const spacing = canvas.width / (projectileCount + 1);
+function getBossSlamSpeed(enemy, canvas) {
+  const movementBounds = getBossMovementBounds(enemy, canvas);
+  const axisProgress = enemy.slamAxis === "horizontal"
+    ? getAxisTravelProgress(enemy.x, movementBounds.minX, movementBounds.maxX, enemy.directionX)
+    : getAxisTravelProgress(enemy.y, movementBounds.minY, movementBounds.maxY, enemy.directionY);
 
-  if (slamAxis === "horizontal") {
-    return {
-      x: spacing * (index + 1),
-      y: canvas.height / 2
-    };
-  }
-
-  return {
-    x: canvas.width / 2,
-    y: (canvas.height / (projectileCount + 1)) * (index + 1)
-  };
+  return enemy.speed + axisProgress * 52;
 }
 
-function getBossSlamSpeed(enemy) {
-  const nearWallBoost = 1 + enemy.bounceCount * 0.15;
+function switchBossWall(enemy, canvas) {
+  const movementBounds = getBossMovementBounds(enemy, canvas);
 
-  return enemy.speed * nearWallBoost;
-}
-
-function getNextBossWall(slamAxis) {
-  if (slamAxis === "horizontal") {
-    return Math.random() > 0.5 ? "top" : "bottom";
+  if (enemy.slamAxis === "horizontal") {
+    const cornerWall = enemy.x <= movementBounds.minX + 0.5 ? "left" : "right";
+    enemy.slamAxis = "vertical";
+    enemy.slamWall = cornerWall;
+    enemy.directionY = enemy.slamWall === "left"
+      ? (enemy.y <= 4 ? 1 : -1)
+      : (enemy.y <= 4 ? 1 : -1);
+    enemy.x = enemy.slamWall === "left" ? movementBounds.minX : movementBounds.maxX;
+    enemy.y = enemy.y <= 4 ? 4 : canvas.height - enemy.height - 4;
+    return;
   }
 
-  return Math.random() > 0.5 ? "left" : "right";
+  const cornerWall = enemy.y <= 4 + 0.5 ? "top" : "bottom";
+  enemy.slamAxis = "horizontal";
+  enemy.slamWall = cornerWall;
+  enemy.directionX = enemy.x <= 4 ? 1 : -1;
+  enemy.y = enemy.slamWall === "top" ? movementBounds.minY : movementBounds.maxY;
+  enemy.x = enemy.x <= 4 ? 4 : canvas.width - enemy.width - 4;
 }
 
 function applyEnemyDamage(enemy, amount) {
@@ -557,4 +583,95 @@ function getDirectionVelocity(direction, speed) {
 
 function clampValue(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function getBossMovementBounds(enemy, canvas) {
+  return {
+    minX: 4,
+    maxX: canvas.width - enemy.width - 4,
+    minY: 4,
+    maxY: canvas.height - enemy.height - 4
+  };
+}
+
+function getAxisTravelProgress(position, min, max, direction) {
+  const span = Math.max(max - min, 1);
+
+  if (direction > 0) {
+    return (position - min) / span;
+  }
+
+  return (max - position) / span;
+}
+
+function getBossTurretCount(enemy) {
+  if (enemy.health <= 2) {
+    return 3;
+  }
+
+  if (enemy.health <= 5) {
+    return 2;
+  }
+
+  return 1;
+}
+
+function countBossTurrets(roomEnemies) {
+  return roomEnemies.filter((enemy) => enemy.alive && enemy.bossSummoned).length;
+}
+
+function removeBossTurrets(roomEnemies) {
+  for (const enemy of roomEnemies) {
+    if (enemy.bossSummoned) {
+      enemy.alive = false;
+    }
+  }
+}
+
+function repositionBossTurrets(boss, roomEnemies, canvas) {
+  const bossTurrets = roomEnemies.filter((enemy) => enemy.alive && enemy.bossSummoned);
+
+  if (bossTurrets.length === 0) {
+    return;
+  }
+
+  const turretPositions = getBossTurretPositions(boss, canvas, bossTurrets.length);
+
+  bossTurrets.forEach((turret, index) => {
+    const position = turretPositions[index];
+    turret.x = position.x;
+    turret.y = position.y;
+    turret.shootTimer = Math.max(turret.shootTimer, 0.45);
+  });
+}
+
+function getBossTurretPositions(boss, canvas, turretCount) {
+  const movementBounds = getBossMovementBounds(boss, canvas);
+  const turretSpacing = 18;
+  const bossCenter = getCenter(boss);
+  const positions = [];
+
+  for (let index = 0; index < turretCount; index += 1) {
+    const spreadOffset = (index - (turretCount - 1) / 2) * turretSpacing;
+
+    if (boss.slamAxis === "horizontal") {
+      positions.push({
+        x: clampValue(bossCenter.x - 4 + spreadOffset, movementBounds.minX, movementBounds.maxX),
+        y: boss.slamWall === "top" ? 0 : canvas.height - 8
+      });
+      continue;
+    }
+
+    positions.push({
+      x: boss.slamWall === "left" ? 0 : canvas.width - 8,
+      y: clampValue(bossCenter.y - 4 + spreadOffset, movementBounds.minY, movementBounds.maxY)
+    });
+  }
+
+  return positions;
+}
+
+function startBossImpactPause(enemy) {
+  enemy.mode = BOSS_MODE_IMPACT;
+  enemy.abilityTimer = enemy.impactPauseDuration;
 }

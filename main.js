@@ -53,7 +53,7 @@ import {
   renderPlayerHealth,
   updatePlayer
 } from "./player/player.js";
-import { getShieldHitbox } from "./player/shield.js";
+import { getShieldHitbox, getShieldSweep } from "./player/shield.js";
 import { getAttackHitbox } from "./player/sword.js";
 import { renderDialogueBox } from "./ui/dialogue-box.js";
 import { renderGameOverScreen } from "./ui/game-over-screen.js";
@@ -209,6 +209,7 @@ function gameLoop(timestamp) {
 
     const playerHitbox = getPlayerHitbox(session.player);
     const shieldHitbox = getShieldHitbox(session.player, session.shield);
+    const shieldSweep = getShieldSweep(session.player, session.shield, previousPlayerPosition);
 
     for (const enemy of roomEnemies) {
       if (blockEnemyWithShield(enemy, shieldHitbox, session.player.facing)) {
@@ -220,7 +221,7 @@ function gameLoop(timestamp) {
       }
     }
 
-    if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldHitbox)) {
+    if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldSweep ?? shieldHitbox)) {
       damagePlayer(session.player);
     }
 

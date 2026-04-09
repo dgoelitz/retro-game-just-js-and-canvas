@@ -40,10 +40,37 @@ export function getShieldHitbox(player, shield) {
     return null;
   }
 
+  return getShieldHitboxForPosition(player, shield, {
+    x: player.x,
+    y: player.y
+  });
+}
+
+export function getShieldSweep(player, shield, previousPlayerPosition) {
+  if (!shield.active) {
+    return null;
+  }
+
+  const previousShieldHitbox = getShieldHitboxForPosition(player, shield, previousPlayerPosition);
+  const currentShieldHitbox = getShieldHitbox(player, shield);
+  const minX = Math.min(previousShieldHitbox.x, currentShieldHitbox.x);
+  const minY = Math.min(previousShieldHitbox.y, currentShieldHitbox.y);
+  const maxX = Math.max(previousShieldHitbox.x + previousShieldHitbox.width, currentShieldHitbox.x + currentShieldHitbox.width);
+  const maxY = Math.max(previousShieldHitbox.y + previousShieldHitbox.height, currentShieldHitbox.y + currentShieldHitbox.height);
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
+function getShieldHitboxForPosition(player, shield, position) {
   if (player.facing === "left") {
     return {
-      x: player.x - shield.width,
-      y: player.y - 1,
+      x: position.x - shield.width,
+      y: position.y - 1,
       width: shield.width,
       height: shield.height
     };
@@ -51,8 +78,8 @@ export function getShieldHitbox(player, shield) {
 
   if (player.facing === "right") {
     return {
-      x: player.x + player.width,
-      y: player.y - 1,
+      x: position.x + player.width,
+      y: position.y - 1,
       width: shield.width,
       height: shield.height
     };
@@ -60,16 +87,16 @@ export function getShieldHitbox(player, shield) {
 
   if (player.facing === "up") {
     return {
-      x: player.x - 1,
-      y: player.y - shield.width,
+      x: position.x - 1,
+      y: position.y - shield.width,
       width: shield.height,
       height: shield.width
     };
   }
 
   return {
-    x: player.x - 1,
-    y: player.y + player.height,
+    x: position.x - 1,
+    y: position.y + player.height,
     width: shield.height,
     height: shield.width
   };

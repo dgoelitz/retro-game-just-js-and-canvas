@@ -8,6 +8,8 @@ export function createProjectile(overrides = {}) {
     kind: "bullet",
     x: 0,
     y: 0,
+    previousX: 0,
+    previousY: 0,
     width: 4,
     height: 4,
     velocityX: 0,
@@ -24,6 +26,8 @@ export function updateProjectiles(projectiles, deltaTime, canvas) {
       continue;
     }
 
+    projectile.previousX = projectile.x;
+    projectile.previousY = projectile.y;
     projectile.x += projectile.velocityX * deltaTime;
     projectile.y += projectile.velocityY * deltaTime;
 
@@ -59,12 +63,14 @@ export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHit
       continue;
     }
 
-    if (projectile.kind === "bullet" && shieldHitbox && rectanglesOverlap(projectile, shieldHitbox)) {
+    const projectileSweep = getProjectileSweep(projectile);
+
+    if (projectile.kind === "bullet" && shieldHitbox && rectanglesOverlap(projectileSweep, shieldHitbox)) {
       deflectProjectile(projectile, shieldHitbox);
       continue;
     }
 
-    if (rectanglesOverlap(projectile, playerHitbox)) {
+    if (rectanglesOverlap(projectileSweep, playerHitbox)) {
       projectile.active = false;
       damagedPlayer = true;
     }
@@ -96,4 +102,20 @@ function isOutsideCanvas(projectile, canvas) {
     projectile.y + projectile.height < 0 ||
     projectile.y > canvas.height
   );
+}
+
+function getProjectileSweep(projectile) {
+  const previousX = projectile.previousX ?? projectile.x;
+  const previousY = projectile.previousY ?? projectile.y;
+  const minX = Math.min(previousX, projectile.x);
+  const minY = Math.min(previousY, projectile.y);
+  const maxX = Math.max(previousX + projectile.width, projectile.x + projectile.width);
+  const maxY = Math.max(previousY + projectile.height, projectile.y + projectile.height);
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
 }

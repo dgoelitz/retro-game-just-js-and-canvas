@@ -126,6 +126,11 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
   }
 
   if (roomIndex === 12) {
+    const bossIsAlive = hasLivingEnemy(roomEnemies, "boss");
+
+    setDoorKind(activeWorld.rooms[11], "top", bossIsAlive ? "barred" : "unlocked");
+    setDoorKind(activeWorld.rooms[12], "bottom", bossIsAlive ? "barred" : "unlocked");
+
     if (!hasLivingEnemy(roomEnemies, "boss") && !session.progress.dungeon.flags.bossDefeated) {
       session.progress.dungeon.flags.bossDefeated = true;
       startDialogue(session, createDialoguePages(ctx, canvas, BOSS_DEATH_TEXT), {
@@ -185,4 +190,12 @@ function unlockDoor(room, edge) {
   }
 
   room.doors[edge].kind = "unlocked";
+}
+
+function setDoorKind(room, edge, kind) {
+  if (!room.doors?.[edge]) {
+    return;
+  }
+
+  room.doors[edge].kind = kind;
 }
