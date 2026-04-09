@@ -138,7 +138,7 @@ function constrainPlayerToDoorRoom(player, room, canvas) {
 function constrainAxisToDoorRoom(player, room, canvas, edge) {
   const door = room.doors?.[edge];
   const isAlignedWithDoor = isPlayerAlignedWithDoor(player, door, canvas);
-  const allowsLeavingThroughDoor = Boolean(door) && isAlignedWithDoor;
+  const allowsLeavingThroughDoor = Boolean(door) && door.kind !== "barred" && isAlignedWithDoor;
 
   if (edge === "left" && player.x < WALL_THICKNESS) {
     if (!allowsLeavingThroughDoor) {

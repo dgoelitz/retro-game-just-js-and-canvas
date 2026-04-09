@@ -15,6 +15,7 @@ export function createProjectile(overrides = {}) {
     velocityX: 0,
     velocityY: 0,
     deflected: false,
+    harmsPlayer: true,
     active: true,
     ...overrides
   };
@@ -55,7 +56,7 @@ export function renderProjectiles(ctx, projectiles, offset = ZERO_OFFSET) {
   }
 }
 
-export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHitbox) {
+export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHitbox, shieldSweep) {
   let damagedPlayer = false;
 
   for (const projectile of projectiles) {
@@ -64,13 +65,19 @@ export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHit
     }
 
     const projectileSweep = getProjectileSweep(projectile);
+    const shieldCollisionHitbox = shieldSweep ?? shieldHitbox;
 
-    if (projectile.kind === "bullet" && shieldHitbox && rectanglesOverlap(projectileSweep, shieldHitbox)) {
+    if (
+      projectile.kind === "bullet" &&
+      !projectile.deflected &&
+      shieldCollisionHitbox &&
+      rectanglesOverlap(projectileSweep, shieldCollisionHitbox)
+    ) {
       deflectProjectile(projectile, shieldHitbox);
       continue;
     }
 
-    if (rectanglesOverlap(projectileSweep, playerHitbox)) {
+    if (projectile.harmsPlayer && rectanglesOverlap(projectileSweep, playerHitbox)) {
       projectile.active = false;
       damagedPlayer = true;
     }
@@ -81,6 +88,7 @@ export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHit
 
 function deflectProjectile(projectile, shieldHitbox) {
   projectile.deflected = true;
+  projectile.harmsPlayer = false;
 
   if (shieldHitbox.height > shieldHitbox.width) {
     projectile.velocityX *= -1;
@@ -93,6 +101,9 @@ function deflectProjectile(projectile, shieldHitbox) {
       ? shieldHitbox.y + shieldHitbox.height
       : shieldHitbox.y - projectile.height;
   }
+
+  projectile.previousX = projectile.x;
+  projectile.previousY = projectile.y;
 }
 
 function isOutsideCanvas(projectile, canvas) {

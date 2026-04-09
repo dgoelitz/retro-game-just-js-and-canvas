@@ -243,7 +243,7 @@ function updateTurretEnemy(enemy, player, deltaTime, projectiles) {
   }
 
   enemy.shootTimer = enemy.shotCooldown;
-  const velocity = getVelocityTowardPlayer(enemy, player, 42);
+  const velocity = getVelocityTowardPlayer(enemy, player, 74);
 
   projectiles.push(createProjectile({
     kind: "bullet",
@@ -262,7 +262,7 @@ function updateFixedTurretEnemy(enemy, deltaTime, projectiles) {
   }
 
   enemy.shootTimer = enemy.shotCooldown;
-  const velocity = getDirectionVelocity(enemy.fixedDirection, 46);
+  const velocity = getDirectionVelocity(enemy.fixedDirection, 78);
 
   projectiles.push(createProjectile({
     kind: "bullet",
@@ -294,7 +294,7 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
         width: 4,
         height: 8,
         velocityX: 0,
-        velocityY: 52
+        velocityY: 82
       }));
     }
 
@@ -400,7 +400,7 @@ function spawnBossTurrets(enemy, roomEnemies, canvas) {
   const bossTurretCount = getBossTurretCount(enemy);
   const turretPositions = getBossTurretPositions(enemy, canvas, bossTurretCount);
 
-  for (const turretPosition of turretPositions) {
+  turretPositions.forEach((turretPosition, index) => {
     roomEnemies.push(createEnemy({
       type: "turret",
       x: turretPosition.x,
@@ -410,10 +410,10 @@ function spawnBossTurrets(enemy, roomEnemies, canvas) {
       health: 1,
       invincible: true,
       shotCooldown: 1.1,
-      shootTimer: 0.55,
+      shootTimer: 0.55 + (index * 1.1) / bossTurretCount,
       bossSummoned: true
     }));
-  }
+  });
 }
 
 function getBossSlamSpeed(enemy, canvas) {

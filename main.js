@@ -221,7 +221,7 @@ function gameLoop(timestamp) {
       }
     }
 
-    if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldSweep ?? shieldHitbox)) {
+    if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldHitbox, shieldSweep)) {
       damagePlayer(session.player);
     }
 
