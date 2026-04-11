@@ -58,7 +58,7 @@ export function createRoomPropsByRoom() {
           worldKey: "dungeon",
           roomIndex: 0,
           playerX: 76,
-          playerY: 56
+          playerY: 66
         }
       })
     ]
@@ -70,7 +70,7 @@ export function createDungeonRoomPropsByRoom() {
     0: [
       createDungeonExit({
         x: 66,
-        y: 68,
+        y: 72,
         destination: {
           worldKey: "overworld",
           roomIndex: 6,
@@ -82,8 +82,8 @@ export function createDungeonRoomPropsByRoom() {
     1: [
       createTarget({
         id: "room-2-target",
-        x: 76,
-        y: 8,
+        x: 120,
+        y: 0,
         progressFlag: "room2TargetDestroyed"
       })
     ],

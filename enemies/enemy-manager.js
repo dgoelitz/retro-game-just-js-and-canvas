@@ -27,18 +27,18 @@ function createOverworldEnemiesByRoom() {
 function createDungeonEnemiesByRoom() {
   return {
     0: [
-      createPatrolEnemy({ x: 56, y: 26, patrolMinX: 28, patrolMaxX: 68 }),
-      createPatrolEnemy({ x: 76, y: 42, patrolMinX: 64, patrolMaxX: 96 }),
-      createPatrolEnemy({ x: 96, y: 26, patrolMinX: 92, patrolMaxX: 124 })
+      createPatrolEnemy({ x: 56, y: 18, patrolMinX: 28, patrolMaxX: 68 }),
+      createPatrolEnemy({ x: 76, y: 26, patrolMinX: 64, patrolMaxX: 96 }),
+      createPatrolEnemy({ x: 96, y: 18, patrolMinX: 92, patrolMaxX: 124 })
     ],
     1: [
-      createTurretEnemy({ x: 76, y: 8, shotCooldown: 1.2 })
+      createTurretEnemy({ x: 32, y: 0, shotCooldown: 1.2 })
     ],
     2: [
-      createStoneEnemy({ x: 42, y: 30, orbitRadiusX: 10, orbitRadiusY: 10 }),
-      createStoneEnemy({ x: 74, y: 56, orbitRadiusX: 8, orbitRadiusY: 8 }),
-      createStoneEnemy({ x: 108, y: 30, orbitRadiusX: 10, orbitRadiusY: 10 }),
-      createTurretEnemy({ x: 76, y: 10, shotCooldown: 1.1 })
+      createStoneEnemy({ x: 42, y: 30, orbitRadiusX: 10, orbitRadiusY: 10, orbitAngle: 0 }),
+      createStoneEnemy({ x: 74, y: 56, orbitRadiusX: 8, orbitRadiusY: 8, orbitAngle: Math.PI * 0.66 }),
+      createStoneEnemy({ x: 32, y: 60, orbitRadiusX: 10, orbitRadiusY: 10, orbitAngle: Math.PI * 1.2 }),
+      createTurretEnemy({ x: 32, y: 0, shotCooldown: 1.1 })
     ],
     3: [
       createFixedTurretEnemy({ x: 6, y: 62, fixedDirection: "right", shotCooldown: 1.4 }),
@@ -128,23 +128,49 @@ function createFixedTurretEnemy(overrides = {}) {
 }
 
 function createStoneEnemy(overrides = {}) {
+  const centerX = overrides.x ?? 100;
+  const centerY = overrides.y ?? 48;
+  const orbitRadiusX = overrides.orbitRadiusX ?? 10;
+  const orbitRadiusY = overrides.orbitRadiusY ?? 10;
+  const orbitAngle = overrides.orbitAngle ?? 0;
+
   return createEnemy({
     type: "stone",
+    x: centerX + Math.cos(orbitAngle) * orbitRadiusX,
+    y: centerY + Math.sin(orbitAngle) * orbitRadiusY,
+    homeX: centerX,
+    homeY: centerY,
     width: 8,
     height: 8,
     health: 1,
     invincible: true,
+    orbitAngle,
+    orbitRadiusX,
+    orbitRadiusY,
     ...overrides
   });
 }
 
 function createSnakeEnemy(overrides = {}) {
+  const centerX = overrides.homeX ?? overrides.x ?? 100;
+  const centerY = overrides.homeY ?? overrides.y ?? 48;
+  const orbitRadiusX = overrides.orbitRadiusX ?? 10;
+  const orbitRadiusY = overrides.orbitRadiusY ?? 10;
+  const orbitAngle = overrides.orbitAngle ?? 0;
+
   return createEnemy({
     type: "snake",
+    x: centerX + Math.cos(orbitAngle) * orbitRadiusX,
+    y: centerY + Math.sin(orbitAngle) * orbitRadiusY,
+    homeX: centerX,
+    homeY: centerY,
     width: 8,
     height: 8,
     health: 99,
     invincible: true,
+    orbitAngle,
+    orbitRadiusX,
+    orbitRadiusY,
     ...overrides
   });
 }

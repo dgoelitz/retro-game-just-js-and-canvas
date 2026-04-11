@@ -26,7 +26,7 @@ const DUNGEON_START = {
   roomIndex: 0,
   playerPosition: {
     x: 76,
-    y: 56
+    y: 66
   }
 };
 
@@ -60,6 +60,17 @@ export function createGameSession() {
 }
 
 export function applyDebugStart(session, debugStartKey) {
+  if (debugStartKey === "dungeon-start") {
+    session.activeWorldKey = "dungeon";
+    session.inventory.hasSword = true;
+    session.worldsByKey.dungeon.currentRoomIndex = DUNGEON_START.roomIndex;
+    session.worldsByKey.dungeon.transition = null;
+    setPlayerPosition(session.player, DUNGEON_START.playerPosition);
+    setGameOverDestination(session, DUNGEON_START);
+    markCurrentRoomVisited(session);
+    return;
+  }
+
   if (debugStartKey !== "boss-test") {
     return;
   }

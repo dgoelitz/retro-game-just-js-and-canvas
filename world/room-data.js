@@ -93,8 +93,7 @@ export function createOverworldRooms() {
 export function createDungeonRooms() {
   return [
     createDungeonRoom(1, { x: 2, y: 4 }, {
-      top: createDoor("top", 1, "barred"),
-      bottom: createDoor("bottom", null, "exit")
+      top: createDoor("top", 1, "barred")
     }),
     createDungeonRoom(2, { x: 2, y: 3 }, {
       left: createDoor("left", 2),
