@@ -211,7 +211,7 @@ function drawDoorRoomWalls(ctx, room, roomBounds) {
 }
 
 function drawDoorEdge(ctx, roomBounds, door, edge) {
-  const doorBounds = getDoorBounds(edge, roomBounds);
+  const doorBounds = getDoorBounds(edge, roomBounds, door);
   const wallSegments = getWallSegmentsForDoor(edge, roomBounds, doorBounds, door);
 
   ctx.fillStyle = WALL_COLOR;
@@ -295,9 +295,9 @@ function getRoomBounds(canvas, offset) {
   };
 }
 
-function getDoorBounds(edge, roomBounds) {
-  const horizontalDoorStart = Math.floor((roomBounds.width - DOOR_WIDTH) / 2);
-  const verticalDoorStart = Math.floor((roomBounds.height - DOOR_WIDTH) / 2);
+function getDoorBounds(edge, roomBounds, door = null) {
+  const horizontalDoorStart = door?.offset ?? Math.floor((roomBounds.width - DOOR_WIDTH) / 2);
+  const verticalDoorStart = door?.offset ?? Math.floor((roomBounds.height - DOOR_WIDTH) / 2);
 
   if (edge === "top") {
     return {
@@ -400,7 +400,7 @@ function isPlayerAlignedWithDoor(player, door, canvas) {
     bottom: canvas.height,
     width: canvas.width,
     height: canvas.height
-  });
+  }, door);
 
   if (door.edge === "left" || door.edge === "right") {
     const playerCenterY = player.y + player.height / 2;

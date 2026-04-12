@@ -38,6 +38,24 @@ export function updateProjectiles(projectiles, deltaTime, canvas) {
   }
 }
 
+export function destroyProjectilesOnWalls(projectiles, walls) {
+  if (walls.length === 0) {
+    return;
+  }
+
+  for (const projectile of projectiles) {
+    if (!projectile.active) {
+      continue;
+    }
+
+    const projectileSweep = getProjectileSweep(projectile);
+
+    if (walls.some((wall) => rectanglesOverlap(projectileSweep, wall))) {
+      projectile.active = false;
+    }
+  }
+}
+
 export function renderProjectiles(ctx, projectiles, offset = ZERO_OFFSET) {
   for (const projectile of projectiles) {
     if (!projectile.active) {

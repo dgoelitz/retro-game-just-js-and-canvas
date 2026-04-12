@@ -262,7 +262,8 @@ function updateFixedTurretEnemy(enemy, deltaTime, projectiles) {
   }
 
   enemy.shootTimer = enemy.shotCooldown;
-  const velocity = getDirectionVelocity(enemy.fixedDirection, 78);
+  const projectileSpeed = enemy.projectileSpeed ?? 78;
+  const velocity = getDirectionVelocity(enemy.fixedDirection, projectileSpeed);
 
   projectiles.push(createProjectile({
     kind: "bullet",

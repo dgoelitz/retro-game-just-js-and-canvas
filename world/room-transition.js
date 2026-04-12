@@ -233,7 +233,7 @@ function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
 }
 
 function isPlayerAlignedWithDoor(player, door, canvas) {
-  const doorBounds = getDoorBounds(door.edge, canvas);
+  const doorBounds = getDoorBounds(door.edge, canvas, door);
 
   if (door.edge === "left" || door.edge === "right") {
     const playerCenterY = player.y + player.height / 2;
@@ -246,9 +246,9 @@ function isPlayerAlignedWithDoor(player, door, canvas) {
   return playerCenterX >= doorBounds.x && playerCenterX <= doorBounds.x + doorBounds.width;
 }
 
-function getDoorBounds(edge, canvas) {
-  const horizontalDoorStart = Math.floor((canvas.width - DOOR_WIDTH) / 2);
-  const verticalDoorStart = Math.floor((canvas.height - DOOR_WIDTH) / 2);
+function getDoorBounds(edge, canvas, door = null) {
+  const horizontalDoorStart = door?.offset ?? Math.floor((canvas.width - DOOR_WIDTH) / 2);
+  const verticalDoorStart = door?.offset ?? Math.floor((canvas.height - DOOR_WIDTH) / 2);
 
   if (edge === "top") {
     return {

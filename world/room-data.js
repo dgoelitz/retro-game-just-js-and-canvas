@@ -106,18 +106,19 @@ export function createDungeonRooms() {
       top: createDoor("top", 3)
     }),
     createDungeonRoom(4, { x: 1, y: 2 }, {
-      left: createDoor("left", 4),
+      left: createDoor("left", 4, "unlocked", { offset: 14 }),
       right: createDoor("right", 5),
-      top: createDoor("top", 6),
+      top: createDoor("top", 6, "unlocked", { offset: 38 }),
       bottom: createDoor("bottom", 2)
     }, {
       internalWalls: [
-        createWall(8, 28, 18, 4),
-        createWall(22, 16, 4, 16)
+        createWall(0, 67, 120, 4),
+        createWall(30, 0, 4, 45),
+        createWall(30, 33, 90, 16),
       ]
     }),
     createDungeonRoom(5, { x: 0, y: 2 }, {
-      right: createDoor("right", 3)
+      right: createDoor("right", 3, "unlocked", { offset: 14 })
     }),
     createDungeonRoom(6, { x: 2, y: 2 }, {
       left: createDoor("left", 3),
@@ -134,7 +135,7 @@ export function createDungeonRooms() {
     }),
     createDungeonRoom(7, { x: 1, y: 1 }, {
       right: createDoor("right", 11),
-      bottom: createDoor("bottom", 3)
+      bottom: createDoor("bottom", 3, "unlocked", { offset: 38 })
     }),
     createDungeonRoom(8, { x: 3, y: 3 }, {
       left: createDoor("left", 1),
@@ -185,12 +186,13 @@ function createDungeonRoom(roomNumber, mapPosition, doors, extras = {}) {
   };
 }
 
-function createDoor(edge, toRoomIndex, kind = "unlocked") {
+function createDoor(edge, toRoomIndex, kind = "unlocked", extras = {}) {
   return {
     edge,
     toRoomIndex,
     kind,
-    width: DOOR_WIDTH
+    width: DOOR_WIDTH,
+    offset: extras.offset ?? null
   };
 }
 

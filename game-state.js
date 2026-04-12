@@ -63,6 +63,8 @@ export function applyDebugStart(session, debugStartKey) {
   if (debugStartKey === "dungeon-start") {
     session.activeWorldKey = "dungeon";
     session.inventory.hasSword = true;
+    session.progress.dungeon.flags.room1Cleared = true;
+    session.enemiesByWorldKey.dungeon[0] = [];
     session.worldsByKey.dungeon.currentRoomIndex = DUNGEON_START.roomIndex;
     session.worldsByKey.dungeon.transition = null;
     setPlayerPosition(session.player, DUNGEON_START.playerPosition);

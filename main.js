@@ -1,6 +1,11 @@
 import { createInput } from "./input.js";
 import { advanceDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
-import { damagePlayerFromProjectiles, renderProjectiles, updateProjectiles } from "./combat/projectiles.js";
+import {
+  damagePlayerFromProjectiles,
+  destroyProjectilesOnWalls,
+  renderProjectiles,
+  updateProjectiles
+} from "./combat/projectiles.js";
 import { handleDungeonRoomEntry, updateDungeonRoomRules } from "./dungeon/dungeon-rules.js";
 import {
   blockEnemyWithShield,
@@ -173,6 +178,7 @@ function gameLoop(timestamp) {
     const roomNpcs = activeNpcsByRoom[roomIndex] ?? [];
     const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
     const roomProjectiles = getRoomProjectiles(activeProjectilesByRoom, roomIndex);
+    const room = activeWorld.rooms[roomIndex];
 
     updatePlayer(
       session.player,
@@ -203,6 +209,7 @@ function gameLoop(timestamp) {
     }
 
     updateProjectiles(roomProjectiles, deltaTime, canvas);
+    destroyProjectilesOnWalls(roomProjectiles, room.internalWalls ?? []);
     resolveProjectileHitsOnEnemies(roomEnemies, roomProjectiles);
     hitTargetProps(roomProps, roomProjectiles);
     hitRoomProps(roomProps, getAttackHitbox(session.player, session.sword));
