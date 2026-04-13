@@ -73,6 +73,20 @@ export function applyDebugStart(session, debugStartKey) {
     return;
   }
 
+  if (debugStartKey === "room5-test") {
+    session.activeWorldKey = "dungeon";
+    session.inventory.hasSword = true;
+    session.inventory.hasShield = true;
+    session.progress.dungeon.flags.room1Cleared = true;
+    session.enemiesByWorldKey.dungeon[0] = [];
+    session.worldsByKey.dungeon.currentRoomIndex = DUNGEON_START.roomIndex;
+    session.worldsByKey.dungeon.transition = null;
+    setPlayerPosition(session.player, DUNGEON_START.playerPosition);
+    setGameOverDestination(session, DUNGEON_START);
+    markCurrentRoomVisited(session);
+    return;
+  }
+
   if (debugStartKey !== "boss-test") {
     return;
   }

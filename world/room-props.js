@@ -110,14 +110,14 @@ export function createDungeonRoomPropsByRoom() {
     5: [
       createTarget({
         id: "room-6-left-target",
-        x: 8,
-        y: 34,
+        x: 0,
+        y: 4,
         progressFlag: "room6LeftTargetDestroyed"
       }),
       createTarget({
         id: "room-6-right-target",
-        x: 148,
-        y: 34,
+        x: 152,
+        y: 4,
         progressFlag: "room6RightTargetDestroyed"
       })
     ],

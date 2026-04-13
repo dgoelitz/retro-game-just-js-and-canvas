@@ -127,10 +127,11 @@ export function createDungeonRooms() {
       bottom: createDoor("bottom", 1)
     }, {
       oneWayPlatforms: [
-        createWall(44, 34, 72, 4)
+        createOneWayPlatform(40, 36, 4, 50, "right"),
+        createOneWayPlatform(116, 36, 4, 50, "left")
       ],
       internalWalls: [
-        createWall(58, 50, 12, 4)
+        createWall(40, 32, 80, 4)
       ]
     }),
     createDungeonRoom(7, { x: 1, y: 1 }, {
@@ -202,5 +203,15 @@ function createWall(x, y, width, height) {
     y,
     width,
     height
+  };
+}
+
+function createOneWayPlatform(x, y, width, height, blocksDirection) {
+  return {
+    x,
+    y,
+    width,
+    height,
+    blocksDirection
   };
 }

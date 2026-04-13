@@ -15,6 +15,7 @@ import {
 const DOOR_OPENING_COLOR = "#1a1c2c";
 const DOOR_BAR_COLOR = "#d27d2c";
 const KEYHOLE_COLOR = "#ffcd75";
+const ONE_WAY_PLATFORM_COLOR = "#7e7f82";
 
 export function createWorld(rooms) {
   return {
@@ -110,22 +111,58 @@ function resolveSolidWallCollisions(player, previousPosition, collisionRects) {
 }
 
 function resolveOneWayPlatformCollisions(player, previousPosition, platforms) {
-  if (player.y >= previousPosition.y) {
-    return;
-  }
-
-  const movedHitbox = getEntityHitbox(player);
-  const previousBottom = previousPosition.y + player.height;
-
   for (const platform of platforms) {
-    const movedIntoPlatform = rectanglesOverlap(platform, movedHitbox);
-    const startedBelowPlatform = previousBottom >= platform.y + platform.height;
+    if (platform.blocksDirection === "right") {
+      const previousRight = previousPosition.x + player.width;
+      const currentRight = player.x + player.width;
+      const crossesBlockingEdge = previousRight <= platform.x && currentRight > platform.x;
+      const overlapsPlatformHeight = overlapsOnYAxis(player, platform);
 
-    if (movedIntoPlatform && startedBelowPlatform) {
+      if (crossesBlockingEdge && overlapsPlatformHeight) {
+        player.x = platform.x - player.width;
+        return;
+      }
+
+      continue;
+    }
+
+    if (platform.blocksDirection === "left") {
+      const previousLeft = previousPosition.x;
+      const platformRight = platform.x + platform.width;
+      const crossesBlockingEdge = previousLeft >= platformRight && player.x < platformRight;
+      const overlapsPlatformHeight = overlapsOnYAxis(player, platform);
+
+      if (crossesBlockingEdge && overlapsPlatformHeight) {
+        player.x = platformRight;
+        return;
+      }
+
+      continue;
+    }
+
+    const movedHitbox = getEntityHitbox(player);
+
+    if (!rectanglesOverlap(platform, movedHitbox)) {
+      continue;
+    }
+
+    const previousBottom = previousPosition.y + player.height;
+    const movedUpIntoPlatform = player.y < previousPosition.y && previousBottom >= platform.y + platform.height;
+
+    if (movedUpIntoPlatform) {
       player.y = previousPosition.y;
       return;
     }
   }
+}
+
+function overlapsOnYAxis(player, platform) {
+  const playerTop = player.y;
+  const playerBottom = player.y + player.height;
+  const platformTop = platform.y;
+  const platformBottom = platform.y + platform.height;
+
+  return playerBottom > platformTop && playerTop < platformBottom;
 }
 
 function constrainPlayerToDoorRoom(player, room, canvas) {
@@ -249,13 +286,13 @@ function drawInternalWalls(ctx, room, offset) {
     return;
   }
 
-  ctx.fillStyle = WALL_COLOR;
-
   for (const wall of internalWalls) {
+    ctx.fillStyle = WALL_COLOR;
     ctx.fillRect(wall.x + offset.x, wall.y + offset.y, wall.width, wall.height);
   }
 
   for (const platform of oneWayPlatforms) {
+    ctx.fillStyle = ONE_WAY_PLATFORM_COLOR;
     ctx.fillRect(platform.x + offset.x, platform.y + offset.y, platform.width, platform.height);
   }
 }

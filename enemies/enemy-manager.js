@@ -63,14 +63,14 @@ function createDungeonEnemiesByRoom() {
     4: [
       createPatrolEnemy({ x: 42, y: 30, patrolMinX: 28, patrolMaxX: 60 }),
       createPatrolEnemy({ x: 110, y: 60, patrolMinX: 90, patrolMaxX: 126 }),
-      createStoneEnemy({ x: 70, y: 24, orbitRadiusX: 8, orbitRadiusY: 10 }),
-      createStoneEnemy({ x: 92, y: 46, orbitRadiusX: 8, orbitRadiusY: 10 }),
-      createFixedTurretEnemy({ x: 8, y: 18, fixedDirection: "right", shotCooldown: 1.2 }),
-      createFixedTurretEnemy({ x: 142, y: 40, fixedDirection: "left", shotCooldown: 0.9 }),
-      createTurretEnemy({ x: 76, y: 8, shotCooldown: 1.0 })
+      createStoneEnemy({ x: 34, y: 60, orbitRadiusX: 8, orbitRadiusY: 10 }),
+      createStoneEnemy({ x: 96, y: 58, orbitRadiusX: 8, orbitRadiusY: 10 }),
+      createFixedTurretEnemy({ x: 0, y: 16, fixedDirection: "right", shotCooldown: 1.2 }),
+      createFixedTurretEnemy({ x: 152, y: 48, fixedDirection: "left", shotCooldown: 0.9 }),
+      createTurretEnemy({ x: 76, y: 0, shotCooldown: 1.0 })
     ],
     5: [
-      createTurretEnemy({ x: 78, y: 26, shotCooldown: 1.0 })
+      createTurretEnemy({ x: 76, y: 36, shotCooldown: 1.0 })
     ],
     6: [
       createFixedTurretEnemy({ x: 6, y: 18, fixedDirection: "right", shotCooldown: 0.9 }),
