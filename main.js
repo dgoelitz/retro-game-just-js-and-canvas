@@ -203,6 +203,8 @@ function gameLoop(timestamp) {
       return;
     }
 
+    updateDungeonRoomRules(session, ctx, canvas);
+
     for (const enemy of roomEnemies) {
       updateEnemy(enemy, session.player, deltaTime, canvas, roomProjectiles, roomEnemies);
       hitEnemy(enemy, getAttackHitbox(session.player, session.sword));

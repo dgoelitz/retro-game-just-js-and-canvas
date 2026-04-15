@@ -135,7 +135,6 @@ export function createDungeonRooms() {
       ]
     }),
     createDungeonRoom(7, { x: 1, y: 1 }, {
-      right: createDoor("right", 11),
       bottom: createDoor("bottom", 3, "unlocked", { offset: 38 })
     }),
     createDungeonRoom(8, { x: 3, y: 3 }, {
