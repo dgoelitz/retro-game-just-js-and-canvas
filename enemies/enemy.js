@@ -94,7 +94,7 @@ export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomE
   }
 
   if (enemy.type === "snake") {
-    updateOrbitEnemy(enemy, deltaTime, 0.5);
+    updateSnakeEnemy(enemy, deltaTime);
     return;
   }
 
@@ -173,6 +173,10 @@ export function touchesEnemy(enemy, hitbox) {
     return false;
   }
 
+  if (enemy.type === "snake") {
+    return getSnakeSegments(enemy).some((segment) => rectanglesOverlap(segment, hitbox));
+  }
+
   return rectanglesOverlap(enemy, hitbox);
 }
 
@@ -203,6 +207,11 @@ export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
   const color = ENEMY_COLOR_BY_TYPE[enemy.type] ?? ENEMY_COLOR_BY_TYPE.patrol;
 
   ctx.fillStyle = color;
+
+  if (enemy.type === "snake") {
+    renderSnake(ctx, enemy, offset);
+    return;
+  }
 
   if (enemy.type === "miniboss" && enemy.mode === MINIBOSS_MODE_SPIN) {
     ctx.fillRect(drawEnemy.x + offset.x - 2, drawEnemy.y + offset.y - 2, drawEnemy.width + 4, drawEnemy.height + 4);
@@ -278,6 +287,33 @@ function updateOrbitEnemy(enemy, deltaTime, speedMultiplier) {
   enemy.orbitAngle += enemy.orbitSpeed * speedMultiplier * deltaTime;
   enemy.x = enemy.homeX + Math.cos(enemy.orbitAngle) * enemy.orbitRadiusX;
   enemy.y = enemy.homeY + Math.sin(enemy.orbitAngle) * enemy.orbitRadiusY;
+}
+
+function updateSnakeEnemy(enemy, deltaTime) {
+  if (!enemy.pathRect) {
+    updateOrbitEnemy(enemy, deltaTime, 0.5);
+    return;
+  }
+
+  enemy.pathProgress += enemy.pathSpeed * enemy.pathDirection * deltaTime;
+
+  const headPosition = getRectangularPathPosition(enemy.pathRect, enemy.pathProgress);
+  enemy.x = headPosition.x;
+  enemy.y = headPosition.y;
+}
+
+function renderSnake(ctx, enemy, offset) {
+  const segments = getSnakeSegments(enemy);
+
+  for (let i = segments.length - 1; i >= 0; i -= 1) {
+    const segment = segments[i];
+    ctx.fillRect(
+      Math.round(segment.x) + offset.x,
+      Math.round(segment.y) + offset.y,
+      segment.width,
+      segment.height
+    );
+  }
 }
 
 function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
@@ -527,6 +563,61 @@ function getDrawEnemy(enemy) {
     y: Math.round(enemy.y),
     width: enemy.width,
     height: enemy.height
+  };
+}
+
+function getSnakeSegments(enemy) {
+  if (!enemy.pathRect) {
+    return [getDrawEnemy(enemy)];
+  }
+
+  const segments = [];
+
+  for (let i = 0; i < enemy.bodyLength; i += 1) {
+    const segmentProgress = enemy.pathProgress - i * enemy.bodySpacing * enemy.pathDirection;
+    const segmentPosition = getRectangularPathPosition(enemy.pathRect, segmentProgress);
+
+    segments.push({
+      x: segmentPosition.x,
+      y: segmentPosition.y,
+      width: enemy.width,
+      height: enemy.height
+    });
+  }
+
+  return segments;
+}
+
+function getRectangularPathPosition(pathRect, progress) {
+  const width = pathRect.right - pathRect.left;
+  const height = pathRect.bottom - pathRect.top;
+  const perimeter = (width + height) * 2;
+  const distance = ((progress % perimeter) + perimeter) % perimeter;
+
+  if (distance < width) {
+    return {
+      x: pathRect.left + distance,
+      y: pathRect.top
+    };
+  }
+
+  if (distance < width + height) {
+    return {
+      x: pathRect.right,
+      y: pathRect.top + distance - width
+    };
+  }
+
+  if (distance < width * 2 + height) {
+    return {
+      x: pathRect.right - (distance - width - height),
+      y: pathRect.bottom
+    };
+  }
+
+  return {
+    x: pathRect.left,
+    y: pathRect.bottom - (distance - width * 2 - height)
   };
 }
 

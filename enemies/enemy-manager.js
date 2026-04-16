@@ -86,9 +86,21 @@ function createDungeonEnemiesByRoom() {
       createPatrolEnemy({ x: 118, y: 60, patrolMinX: 108, patrolMaxX: 134 })
     ],
     8: [
-      createSnakeEnemy({ x: 32, y: 16, homeX: 32, homeY: 16, orbitRadiusX: 42, orbitRadiusY: 22, orbitSpeed: 0.7 }),
-      createSnakeEnemy({ x: 74, y: 40, homeX: 74, homeY: 40, orbitRadiusX: 18, orbitRadiusY: 12, orbitSpeed: 0.8 }),
-      createSnakeEnemy({ x: 70, y: 30, homeX: 78, homeY: 36, orbitRadiusX: 30, orbitRadiusY: 20, orbitSpeed: -0.6 })
+      createRectangularSnakeEnemy({
+        pathRect: { left: 4, top: 4, right: 148, bottom: 78 },
+        pathProgress: 12,
+        pathDirection: 1
+      }),
+      createRectangularSnakeEnemy({
+        pathRect: { left: 18, top: 14, right: 134, bottom: 66 },
+        pathProgress: 72,
+        pathDirection: -1
+      }),
+      createRectangularSnakeEnemy({
+        pathRect: { left: 40, top: 12, right: 112, bottom: 70 },
+        pathProgress: 120,
+        pathDirection: 1
+      })
     ],
     9: [
       createMinibossEnemy()
@@ -187,6 +199,62 @@ function createSnakeEnemy(overrides = {}) {
     orbitRadiusY,
     ...overrides
   });
+}
+
+function createRectangularSnakeEnemy(overrides = {}) {
+  const pathRect = overrides.pathRect ?? { left: 4, top: 4, right: 148, bottom: 78 };
+  const pathProgress = overrides.pathProgress ?? 0;
+  const startPosition = getRectangularPathPosition(pathRect, pathProgress);
+
+  return createEnemy({
+    type: "snake",
+    x: startPosition.x,
+    y: startPosition.y,
+    width: 8,
+    height: 8,
+    health: 99,
+    invincible: true,
+    pathRect,
+    pathProgress,
+    pathDirection: overrides.pathDirection ?? 1,
+    pathSpeed: overrides.pathSpeed ?? 22,
+    bodyLength: overrides.bodyLength ?? 5,
+    bodySpacing: overrides.bodySpacing ?? 7,
+    ...overrides
+  });
+}
+
+function getRectangularPathPosition(pathRect, progress) {
+  const width = pathRect.right - pathRect.left;
+  const height = pathRect.bottom - pathRect.top;
+  const perimeter = (width + height) * 2;
+  const distance = ((progress % perimeter) + perimeter) % perimeter;
+
+  if (distance < width) {
+    return {
+      x: pathRect.left + distance,
+      y: pathRect.top
+    };
+  }
+
+  if (distance < width + height) {
+    return {
+      x: pathRect.right,
+      y: pathRect.top + distance - width
+    };
+  }
+
+  if (distance < width * 2 + height) {
+    return {
+      x: pathRect.right - (distance - width - height),
+      y: pathRect.bottom
+    };
+  }
+
+  return {
+    x: pathRect.left,
+    y: pathRect.bottom - (distance - width * 2 - height)
+  };
 }
 
 function createMinibossEnemy() {

@@ -1,5 +1,5 @@
 import { rectanglesOverlap } from "../game-utils.js";
-import { DOOR_WIDTH } from "./room-data.js";
+import { DOOR_WIDTH, WALL_THICKNESS } from "./room-data.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;
 
@@ -91,6 +91,7 @@ function tryStartDoorTransition(session, room, canvas) {
     const door = room.doors[check.edge];
 
     if (!canUseDoor(session, door, canvas)) {
+      keepPlayerInsideDoorRoom(player, check.edge, canvas);
       return false;
     }
 
@@ -100,6 +101,27 @@ function tryStartDoorTransition(session, room, canvas) {
   }
 
   return false;
+}
+
+function keepPlayerInsideDoorRoom(player, edge, canvas) {
+  if (edge === "right") {
+    player.x = canvas.width - WALL_THICKNESS - player.width;
+    return;
+  }
+
+  if (edge === "left") {
+    player.x = WALL_THICKNESS;
+    return;
+  }
+
+  if (edge === "top") {
+    player.y = WALL_THICKNESS;
+    return;
+  }
+
+  if (edge === "bottom") {
+    player.y = canvas.height - WALL_THICKNESS - player.height;
+  }
 }
 
 function tryStartOpenEdgeTransition(player, world, canvas) {

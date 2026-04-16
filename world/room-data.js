@@ -143,16 +143,16 @@ export function createDungeonRooms() {
     }),
     createDungeonRoom(9, { x: 3, y: 2 }, {
       left: createDoor("left", 5),
-      right: createDoor("right", 9),
+      right: createDoor("right", 9, "key"),
       top: createDoor("top", 10),
       bottom: createDoor("bottom", 7)
     }, {
       internalWalls: [
-        createWall(60, 26, 28, 28)
+        createWall(48, 20, 64, 50)
       ]
     }),
     createDungeonRoom(10, { x: 4, y: 2 }, {
-      left: createDoor("left", 8, "barred")
+      left: createDoor("left", 8)
     }),
     createDungeonRoom(11, { x: 3, y: 1 }, {
       left: createDoor("left", 11, "barred"),
