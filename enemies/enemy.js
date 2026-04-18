@@ -20,6 +20,7 @@ const MINIBOSS_MODE_REST = "rest";
 const BOSS_MODE_SLAM = "slam";
 const BOSS_MODE_IMPACT = "impact";
 const BOSS_MODE_STUNNED = "stunned";
+const MINIBOSS_SPIN_PADDING = 4;
 
 export function createEnemy(overrides = {}) {
   return {
@@ -217,7 +218,8 @@ export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
   }
 
   if (enemy.type === "miniboss" && enemy.mode === MINIBOSS_MODE_SPIN) {
-    ctx.fillRect(drawEnemy.x + offset.x - 2, drawEnemy.y + offset.y - 2, drawEnemy.width + 4, drawEnemy.height + 4);
+    ctx.fillRect(drawEnemy.x + offset.x - 4, drawEnemy.y + offset.y - 4, drawEnemy.width + 8, drawEnemy.height + 8);
+    ctx.restore();
     return;
   }
 
@@ -328,15 +330,16 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
     tickTimer(enemy, "shootTimer", deltaTime);
 
     if (enemy.shootTimer === 0) {
+      const swordSpeed = getMinibossSwordSpeed(enemy);
       enemy.shootTimer = enemy.shotCooldown;
       projectiles.push(createProjectile({
         kind: "sword-projectile",
         x: clampValue(player.x + 2, 4, canvas.width - 8),
         y: 4,
         width: 4,
-        height: 8,
+        height: 12,
         velocityX: 0,
-        velocityY: 82
+        velocityY: swordSpeed
       }));
     }
 
@@ -351,18 +354,22 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
   }
 
   if (enemy.mode === MINIBOSS_MODE_SPIN) {
-    enemy.x += enemy.directionX * 24 * deltaTime;
-    enemy.y += enemy.directionY * 24 * deltaTime;
+    const spinSpeed = 58;
+    enemy.x += enemy.directionX * spinSpeed * deltaTime;
+    enemy.y += enemy.directionY * spinSpeed * deltaTime;
+    const spinBounds = getMinibossSpinBounds(enemy, canvas);
 
-    if (enemy.x <= 4 || enemy.x + enemy.width >= canvas.width - 4) {
+    if (enemy.x <= spinBounds.minX || enemy.x >= spinBounds.maxX) {
+      enemy.x = clampValue(enemy.x, spinBounds.minX, spinBounds.maxX);
       enemy.directionX *= -1;
     }
 
-    if (enemy.y <= 4 || enemy.y + enemy.height >= canvas.height - 4) {
+    if (enemy.y <= spinBounds.minY || enemy.y >= spinBounds.maxY) {
+      enemy.y = clampValue(enemy.y, spinBounds.minY, spinBounds.maxY);
       enemy.directionY *= -1;
     }
 
-    if (enemy.abilityTimer >= 2.2) {
+    if (enemy.abilityTimer >= 4.2) {
       enemy.mode = MINIBOSS_MODE_REST;
       enemy.abilityTimer = 0;
       enemy.x = canvas.width / 2 - enemy.width / 2;
@@ -372,11 +379,32 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
     return;
   }
 
-  if (enemy.abilityTimer >= 1.6) {
+  if (enemy.abilityTimer >= 2.4) {
     enemy.mode = MINIBOSS_MODE_THROW;
     enemy.abilityTimer = 0;
     enemy.shootTimer = 0;
   }
+}
+
+function getMinibossSwordSpeed(enemy) {
+  const maxHealth = enemy.maxHealth ?? enemy.health;
+  const damageTaken = maxHealth - enemy.health;
+  const damageProgress = damageTaken / Math.max(maxHealth - 1, 1);
+  const startingSpeed = 41;
+  const endingSpeed = 82;
+
+  return startingSpeed + (endingSpeed - startingSpeed) * damageProgress;
+}
+
+function getMinibossSpinBounds(enemy, canvas) {
+  const roomPadding = 4;
+
+  return {
+    minX: roomPadding + MINIBOSS_SPIN_PADDING,
+    maxX: canvas.width - enemy.width - roomPadding - MINIBOSS_SPIN_PADDING,
+    minY: roomPadding + MINIBOSS_SPIN_PADDING,
+    maxY: canvas.height - enemy.height - roomPadding - MINIBOSS_SPIN_PADDING
+  };
 }
 
 function updateBoss(enemy, player, deltaTime, canvas, roomEnemies) {

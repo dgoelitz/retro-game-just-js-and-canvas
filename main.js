@@ -107,7 +107,7 @@ function render() {
     const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
 
     for (const enemy of roomEnemies) {
-      enemy.transparent = enemy.type !== "boss" && roomIndex === activeWorld.currentRoomIndex && session.roomEntryGraceTimer > 0;
+      enemy.transparent = canUseRoomEntryGrace(enemy) && roomIndex === activeWorld.currentRoomIndex && session.roomEntryGraceTimer > 0;
       renderEnemy(ctx, enemy, offset);
     }
 
@@ -247,7 +247,7 @@ function gameLoop(timestamp) {
         continue;
       }
 
-      if (enemy.type !== "boss" && session.roomEntryGraceTimer > 0) {
+      if (canUseRoomEntryGrace(enemy) && session.roomEntryGraceTimer > 0) {
         continue;
       }
 
@@ -312,6 +312,10 @@ function startBlockedDoorDialogue(session, doorKind) {
   }
 
   startDialogue(session, createDialoguePages(ctx, canvas, message));
+}
+
+function canUseRoomEntryGrace(enemy) {
+  return enemy.type !== "boss" && enemy.type !== "miniboss";
 }
 
 requestAnimationFrame(gameLoop);

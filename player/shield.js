@@ -1,7 +1,7 @@
 import { ZERO_OFFSET } from "../game-utils.js";
 
-const SHIELD_COLOR = "#94b0c2";
-const SHIELD_BORDER_COLOR = "#5f6f7a";
+const SHIELD_COLOR = "#7a4f24";
+const SHIELD_BORDER_COLOR = "#4f3422";
 
 export function createShield() {
   return {

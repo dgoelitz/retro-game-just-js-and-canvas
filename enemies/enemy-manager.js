@@ -284,8 +284,10 @@ function createMinibossEnemy() {
     width: 10,
     height: 10,
     health: 8,
+    maxHealth: 8,
     mode: "throw",
-    shotCooldown: 0.9
+    shotCooldown: 0.9,
+    shootTimer: 1.6
   });
 }
 

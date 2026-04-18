@@ -1,6 +1,7 @@
 import { startDialogue } from "../dialogue/dialogue-state.js";
 import { createDialoguePages } from "../dialogue/dialogue-pages.js";
 import { GAME_STATE_PLAYING, getActiveRoomPropsByRoom, getActiveWorld } from "../game-state.js";
+import { rectanglesOverlap } from "../game-utils.js";
 
 const MINIBOSS_INTRO_TEXT = "Oh wow hey, you kind of took me by surprise. Been a while since someone showed up here. Ok then, let's hurry this up. It's a really good part in the show I'm watching.";
 const MINIBOSS_DEATH_TEXT = "Noooooo! I'll never find out if they kissed or not!";
@@ -63,7 +64,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
   if (roomIndex === 2) {
     if (countLivingEnemies(roomEnemies, "stone") === 0) {
       killEnemiesByType(roomEnemies, "turret");
-      revealRoomProp(roomProps, "room-3-map");
+      revealRoomProp(roomProps, "room-3-map", session.player);
     }
     return;
   }
@@ -71,7 +72,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
   if (roomIndex === 4) {
     if (areAllKillableEnemiesDefeated(roomEnemies)) {
       killEnemiesByType(roomEnemies, "turret");
-      revealRoomProp(roomProps, "room-5-boss-key");
+      revealRoomProp(roomProps, "room-5-boss-key", session.player);
     }
     return;
   }
@@ -92,7 +93,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
 
   if (roomIndex === 7) {
     if (areAllEnemiesDefeated(roomEnemies)) {
-      revealRoomProp(roomProps, "room-8-compass");
+      revealRoomProp(roomProps, "room-8-compass", session.player);
     }
     return;
   }
@@ -103,7 +104,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
       unlockDoor(activeWorld.rooms[9], "left");
       startDialogue(session, createDialoguePages(ctx, canvas, MINIBOSS_DEATH_TEXT), {
         onComplete() {
-          revealRoomProp(roomProps, "room-10-shield");
+          revealRoomProp(roomProps, "room-10-shield", session.player);
         }
       });
     }
@@ -112,7 +113,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
 
   if (roomIndex === 10) {
     if (areAllEnemiesDefeated(roomEnemies)) {
-      revealRoomProp(roomProps, "room-11-heart-piece");
+      revealRoomProp(roomProps, "room-11-heart-piece", session.player);
     }
     return;
   }
@@ -135,7 +136,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
       session.progress.dungeon.flags.bossDefeated = true;
       startDialogue(session, createDialoguePages(ctx, canvas, BOSS_DEATH_TEXT), {
         onComplete() {
-          revealRoomProp(roomProps, "room-13-final-treasure");
+          revealRoomProp(roomProps, "room-13-final-treasure", session.player);
         }
       });
     }
@@ -176,12 +177,21 @@ function killEnemiesByType(roomEnemies, type) {
   }
 }
 
-function revealRoomProp(roomProps, id) {
+function revealRoomProp(roomProps, id, player) {
   const prop = roomProps.find((roomProp) => roomProp.id === id);
 
   if (prop) {
     prop.hidden = false;
+    movePropOutOfPlayer(prop, player);
   }
+}
+
+function movePropOutOfPlayer(prop, player) {
+  if (!player || !rectanglesOverlap(prop, player)) {
+    return;
+  }
+
+  prop.y = player.y - prop.height;
 }
 
 function unlockDoor(room, edge) {

@@ -89,6 +89,49 @@ export function applyDebugStart(session, debugStartKey) {
     return;
   }
 
+  if (debugStartKey === "miniboss-test") {
+    session.activeWorldKey = "dungeon";
+    session.inventory.hasSword = true;
+    session.inventory.hasMap = true;
+    session.inventory.hasCompass = true;
+    session.inventory.hasBossKey = true;
+    session.inventory.normalKeys = 1;
+
+    Object.assign(session.progress.dungeon.flags, {
+      room1Cleared: true,
+      room2TargetDestroyed: true,
+      mapChestOpened: true,
+      bossKeyChestOpened: true,
+      room6LeftTargetDestroyed: true,
+      room6RightTargetDestroyed: true,
+      keyChestOpened: true,
+      compassChestOpened: true
+    });
+
+    session.enemiesByWorldKey.dungeon[0] = [];
+
+    const dungeonWorld = session.worldsByKey.dungeon;
+    dungeonWorld.currentRoomIndex = 8;
+    dungeonWorld.transition = null;
+    unlockDungeonDoorsForMinibossTest(dungeonWorld);
+
+    setPlayerPosition(session.player, {
+      x: 132,
+      y: 38
+    });
+
+    markCurrentRoomVisited(session);
+    setGameOverDestination(session, {
+      worldKey: "dungeon",
+      roomIndex: 8,
+      playerPosition: {
+        x: 132,
+        y: 38
+      }
+    });
+    return;
+  }
+
   if (debugStartKey !== "boss-test") {
     return;
   }
@@ -294,6 +337,12 @@ function applyBossTestRoomPropState(session) {
   markChestCollected(dungeonRoomPropsByRoom[9], "room-10-shield");
   markChestCollected(dungeonRoomPropsByRoom[10], "room-11-heart-piece");
   markSwitchActivated(dungeonRoomPropsByRoom[11], "room-12-switch");
+}
+
+function unlockDungeonDoorsForMinibossTest(dungeonWorld) {
+  unlockDoor(dungeonWorld.rooms[0], "top");
+  unlockDoor(dungeonWorld.rooms[1], "top");
+  unlockDoor(dungeonWorld.rooms[5], "top");
 }
 
 function unlockDungeonDoorsForBossTest(dungeonWorld) {

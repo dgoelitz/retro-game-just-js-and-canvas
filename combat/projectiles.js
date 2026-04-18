@@ -2,6 +2,8 @@ import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
 
 const BULLET_COLOR = "#94b0c2";
 const SWORD_PROJECTILE_COLOR = "#fff1e8";
+const SWORD_PROJECTILE_HANDLE_COLOR = "#7a4f24";
+const SWORD_PROJECTILE_HANDLE_SIZE = 5;
 
 export function createProjectile(overrides = {}) {
   return {
@@ -62,9 +64,12 @@ export function renderProjectiles(ctx, projectiles, offset = ZERO_OFFSET) {
       continue;
     }
 
-    const color = projectile.kind === "bullet" ? BULLET_COLOR : SWORD_PROJECTILE_COLOR;
+    if (projectile.kind === "sword-projectile") {
+      renderSwordProjectile(ctx, projectile, offset);
+      continue;
+    }
 
-    ctx.fillStyle = color;
+    ctx.fillStyle = BULLET_COLOR;
     ctx.fillRect(
       Math.round(projectile.x) + offset.x,
       Math.round(projectile.y) + offset.y,
@@ -72,6 +77,25 @@ export function renderProjectiles(ctx, projectiles, offset = ZERO_OFFSET) {
       projectile.height
     );
   }
+}
+
+function renderSwordProjectile(ctx, projectile, offset) {
+  const drawX = Math.round(projectile.x) + offset.x;
+  const drawY = Math.round(projectile.y) + offset.y;
+  const drawWidth = Math.round(projectile.width);
+  const drawHeight = Math.round(projectile.height);
+  const handleHeight = Math.min(SWORD_PROJECTILE_HANDLE_SIZE, drawHeight);
+  const bladeHeight = drawHeight - handleHeight;
+
+  ctx.fillStyle = SWORD_PROJECTILE_HANDLE_COLOR;
+  ctx.fillRect(drawX, drawY, drawWidth, handleHeight);
+
+  if (bladeHeight <= 0) {
+    return;
+  }
+
+  ctx.fillStyle = SWORD_PROJECTILE_COLOR;
+  ctx.fillRect(drawX, drawY + handleHeight, drawWidth, bladeHeight);
 }
 
 export function damagePlayerFromProjectiles(projectiles, playerHitbox, shieldHitbox, shieldSweep) {
