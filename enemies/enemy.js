@@ -199,17 +199,20 @@ export function blockEnemyWithShield(enemy, shieldHitbox, playerFacing) {
 }
 
 export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
-  if (!enemy.alive || isEnemyHiddenDuringFlash(enemy)) {
+  if (!enemy.alive) {
     return;
   }
 
   const drawEnemy = getDrawEnemy(enemy);
   const color = ENEMY_COLOR_BY_TYPE[enemy.type] ?? ENEMY_COLOR_BY_TYPE.patrol;
 
+  ctx.save();
+  ctx.globalAlpha = getEnemyAlpha(enemy);
   ctx.fillStyle = color;
 
   if (enemy.type === "snake") {
     renderSnake(ctx, enemy, offset);
+    ctx.restore();
     return;
   }
 
@@ -220,10 +223,12 @@ export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
 
   if (enemy.type === "boss") {
     ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
+    ctx.restore();
     return;
   }
 
   ctx.fillRect(drawEnemy.x + offset.x, drawEnemy.y + offset.y, drawEnemy.width, drawEnemy.height);
+  ctx.restore();
 }
 
 function updatePatrolEnemy(enemy, player, deltaTime, canvas) {
@@ -489,21 +494,28 @@ function applyEnemyDamage(enemy, amount) {
   enemy.health -= amount;
   enemy.invulnerableTimer = enemy.invulnerableDuration;
 
+  if (enemy.type === "boss") {
+    enemy.mode = BOSS_MODE_SLAM;
+    enemy.abilityTimer = 0;
+    enemy.shootTimer = enemy.spawnCooldown;
+  }
+
   if (enemy.health <= 0) {
     enemy.health = 0;
     enemy.alive = false;
   }
 }
 
-function isEnemyHiddenDuringFlash(enemy) {
-  if (enemy.invulnerableTimer <= 0) {
-    return false;
-  }
-
+function getEnemyAlpha(enemy) {
   const elapsedFlashTime = enemy.invulnerableDuration - enemy.invulnerableTimer;
   const flashPhase = Math.floor(elapsedFlashTime / enemy.flashInterval);
+  const isTransparentDuringDamageFlash = enemy.invulnerableTimer > 0 && flashPhase % 2 === 0;
 
-  return flashPhase % 2 === 0;
+  if (enemy.transparent || isTransparentDuringDamageFlash) {
+    return 0.45;
+  }
+
+  return 1;
 }
 
 function isPlayerInChaseRange(enemy, player) {

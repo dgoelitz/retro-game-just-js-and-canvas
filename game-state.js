@@ -49,6 +49,8 @@ export function createGameSession() {
     },
     inventory: createInventory(),
     progress: createProgress(),
+    roomEntryGraceTimer: 0,
+    blockedDoorMessageShown: false,
     dialogue: null,
     mode: GAME_STATE_PLAYING,
     gameOverDestination: OVERWORLD_START
@@ -146,6 +148,8 @@ export function resetGameSession(session) {
   session.projectilesByWorldKey = nextSession.projectilesByWorldKey;
   session.inventory = nextSession.inventory;
   session.progress = nextSession.progress;
+  session.roomEntryGraceTimer = nextSession.roomEntryGraceTimer;
+  session.blockedDoorMessageShown = nextSession.blockedDoorMessageShown;
   session.dialogue = nextSession.dialogue;
   session.mode = nextSession.mode;
   session.gameOverDestination = nextSession.gameOverDestination;
@@ -160,6 +164,8 @@ export function respawnAfterGameOver(session) {
     overworld: {},
     dungeon: {}
   };
+  session.roomEntryGraceTimer = 0;
+  session.blockedDoorMessageShown = false;
   session.dialogue = null;
   session.mode = GAME_STATE_PLAYING;
 
@@ -218,6 +224,8 @@ export function markCurrentRoomVisited(session) {
 
   const activeWorld = getActiveWorld(session);
   session.progress.dungeon.visitedRooms[activeWorld.currentRoomIndex] = true;
+  session.roomEntryGraceTimer = 0.35;
+  session.blockedDoorMessageShown = false;
 }
 
 export function setGameOverDestination(session, destination) {

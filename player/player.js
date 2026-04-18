@@ -65,14 +65,13 @@ export function updatePlayer(player, sword, shield, input, deltaTime, canAttack 
 export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
   const drawPlayer = getDrawPlayer(player);
 
-  if (isPlayerHiddenDuringFlash(player)) {
-    return;
-  }
-
+  ctx.save();
+  ctx.globalAlpha = getPlayerAlpha(player);
   renderShield(ctx, drawPlayer, shield, offset);
   ctx.fillStyle = PLAYER_COLOR;
   ctx.fillRect(drawPlayer.x + offset.x, drawPlayer.y + offset.y, drawPlayer.width, drawPlayer.height);
   renderSword(ctx, drawPlayer, sword, offset);
+  ctx.restore();
 }
 
 export function getPlayerHitbox(player) {
@@ -121,15 +120,15 @@ export function renderPlayerHealth(ctx, player) {
   }
 }
 
-function isPlayerHiddenDuringFlash(player) {
+function getPlayerAlpha(player) {
   if (player.invulnerableTimer <= 0) {
-    return false;
+    return 1;
   }
 
   const elapsedFlashTime = player.invulnerableDuration - player.invulnerableTimer;
   const flashPhase = Math.floor(elapsedFlashTime / player.flashInterval);
 
-  return flashPhase % 2 === 0;
+  return flashPhase % 2 === 0 ? 0.45 : 1;
 }
 
 function getDrawPlayer(player) {

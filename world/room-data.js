@@ -148,7 +148,7 @@ export function createDungeonRooms() {
       bottom: createDoor("bottom", 7)
     }, {
       internalWalls: [
-        createWall(48, 20, 64, 50)
+        createWall(36, 36, 88, 18)
       ]
     }),
     createDungeonRoom(10, { x: 4, y: 2 }, {

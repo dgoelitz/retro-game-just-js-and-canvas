@@ -86,18 +86,18 @@ function createDungeonEnemiesByRoom() {
       createPatrolEnemy({ x: 118, y: 60, patrolMinX: 108, patrolMaxX: 134 })
     ],
     8: [
-      createRectangularSnakeEnemy({
+      ...createSnakePair({
         pathRect: { left: 4, top: 4, right: 148, bottom: 78 },
         pathProgress: 12,
         pathDirection: 1
       }),
-      createRectangularSnakeEnemy({
-        pathRect: { left: 18, top: 14, right: 134, bottom: 66 },
+      ...createSnakePair({
+        pathRect: { left: 16, top: 16, right: 136, bottom: 66 },
         pathProgress: 72,
         pathDirection: -1
       }),
-      createRectangularSnakeEnemy({
-        pathRect: { left: 40, top: 12, right: 112, bottom: 70 },
+      ...createSnakePair({
+        pathRect: { left: 28, top: 28, right: 124, bottom: 54 },
         pathProgress: 120,
         pathDirection: 1
       })
@@ -224,6 +224,16 @@ function createRectangularSnakeEnemy(overrides = {}) {
   });
 }
 
+function createSnakePair(overrides) {
+  return [
+    createRectangularSnakeEnemy(overrides),
+    createRectangularSnakeEnemy({
+      ...overrides,
+      pathProgress: overrides.pathProgress + getRectangularPathHalfwayPoint(overrides.pathRect)
+    })
+  ];
+}
+
 function getRectangularPathPosition(pathRect, progress) {
   const width = pathRect.right - pathRect.left;
   const height = pathRect.bottom - pathRect.top;
@@ -255,6 +265,13 @@ function getRectangularPathPosition(pathRect, progress) {
     x: pathRect.left,
     y: pathRect.bottom - (distance - width * 2 - height)
   };
+}
+
+function getRectangularPathHalfwayPoint(pathRect) {
+  const width = pathRect.right - pathRect.left;
+  const height = pathRect.bottom - pathRect.top;
+
+  return width + height;
 }
 
 function createMinibossEnemy() {

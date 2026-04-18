@@ -47,11 +47,11 @@ export function renderWorld(ctx, world, canvas, renderRoomContents) {
   renderRoomContents(world.transition.toRoomIndex, transitionOffsets.to);
 }
 
-export function constrainPlayerToRoom(player, world, canvas) {
+export function constrainPlayerToRoom(player, world, canvas, inventory = null) {
   const room = getCurrentRoom(world);
 
   if (hasCenteredDoors(room)) {
-    constrainPlayerToDoorRoom(player, room, canvas);
+    constrainPlayerToDoorRoom(player, room, canvas, inventory);
     return;
   }
 
@@ -78,6 +78,21 @@ export function resolveRoomGeometryCollisions(player, previousPosition, world) {
   if (oneWayPlatforms.length > 0) {
     resolveOneWayPlatformCollisions(player, previousPosition, oneWayPlatforms);
   }
+}
+
+export function getBlockedDoorKindAtRoomEdge(player, world, canvas, inventory = null) {
+  const room = getCurrentRoom(world);
+
+  if (!hasCenteredDoors(room)) {
+    return null;
+  }
+
+  return (
+    getBlockedDoorKindForEdge(player, room, canvas, inventory, "left") ??
+    getBlockedDoorKindForEdge(player, room, canvas, inventory, "right") ??
+    getBlockedDoorKindForEdge(player, room, canvas, inventory, "top") ??
+    getBlockedDoorKindForEdge(player, room, canvas, inventory, "bottom")
+  );
 }
 
 function resolveSolidWallCollisions(player, previousPosition, collisionRects) {
@@ -165,17 +180,17 @@ function overlapsOnYAxis(player, platform) {
   return playerBottom > platformTop && playerTop < platformBottom;
 }
 
-function constrainPlayerToDoorRoom(player, room, canvas) {
-  constrainAxisToDoorRoom(player, room, canvas, "left");
-  constrainAxisToDoorRoom(player, room, canvas, "right");
-  constrainAxisToDoorRoom(player, room, canvas, "top");
-  constrainAxisToDoorRoom(player, room, canvas, "bottom");
+function constrainPlayerToDoorRoom(player, room, canvas, inventory) {
+  constrainAxisToDoorRoom(player, room, canvas, inventory, "left");
+  constrainAxisToDoorRoom(player, room, canvas, inventory, "right");
+  constrainAxisToDoorRoom(player, room, canvas, inventory, "top");
+  constrainAxisToDoorRoom(player, room, canvas, inventory, "bottom");
 }
 
-function constrainAxisToDoorRoom(player, room, canvas, edge) {
+function constrainAxisToDoorRoom(player, room, canvas, inventory, edge) {
   const door = room.doors?.[edge];
   const isAlignedWithDoor = isPlayerAlignedWithDoor(player, door, canvas);
-  const allowsLeavingThroughDoor = Boolean(door) && door.kind !== "barred" && isAlignedWithDoor;
+  const allowsLeavingThroughDoor = door && isPassableDoor(door, inventory) && isAlignedWithDoor;
 
   if (edge === "left" && player.x < WALL_THICKNESS) {
     if (!allowsLeavingThroughDoor) {
@@ -203,6 +218,48 @@ function constrainAxisToDoorRoom(player, room, canvas, edge) {
       player.y = canvas.height - WALL_THICKNESS - player.height;
     }
   }
+}
+
+function getBlockedDoorKindForEdge(player, room, canvas, inventory, edge) {
+  const door = room.doors?.[edge];
+
+  if (!door || isPassableDoor(door, inventory) || !isPlayerAlignedWithDoor(player, door, canvas)) {
+    return null;
+  }
+
+  if (edge === "left" && player.x < WALL_THICKNESS) {
+    return door.kind;
+  }
+
+  if (edge === "right" && player.x + player.width > canvas.width - WALL_THICKNESS) {
+    return door.kind;
+  }
+
+  if (edge === "top" && player.y < WALL_THICKNESS) {
+    return door.kind;
+  }
+
+  if (edge === "bottom" && player.y + player.height > canvas.height - WALL_THICKNESS) {
+    return door.kind;
+  }
+
+  return null;
+}
+
+function isPassableDoor(door, inventory) {
+  if (door.kind === "unlocked") {
+    return true;
+  }
+
+  if (door.kind === "key") {
+    return inventory?.normalKeys > 0;
+  }
+
+  if (door.kind === "boss-key") {
+    return inventory?.hasBossKey === true;
+  }
+
+  return false;
 }
 
 function renderRoom(ctx, room, canvas, offset) {

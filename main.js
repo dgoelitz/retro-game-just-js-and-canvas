@@ -1,5 +1,6 @@
 import { createInput } from "./input.js";
-import { advanceDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
+import { advanceDialogue, startDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
+import { createDialoguePages } from "./dialogue/dialogue-pages.js";
 import {
   damagePlayerFromProjectiles,
   destroyProjectilesOnWalls,
@@ -44,6 +45,7 @@ import {
 } from "./world/room-props.js";
 import {
   constrainPlayerToRoom,
+  getBlockedDoorKindAtRoomEdge,
   handleWorldTransition,
   isTransitioning,
   renderWorld,
@@ -63,12 +65,18 @@ import { getAttackHitbox } from "./player/sword.js";
 import { renderDialogueBox } from "./ui/dialogue-box.js";
 import { renderGameOverScreen } from "./ui/game-over-screen.js";
 import { renderMapScreen } from "./ui/map-screen.js";
+import { tickTimer } from "./game-utils.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const input = createInput();
 const session = createGameSession();
 const debugStartKey = window.location.hash.replace("#", "");
+const BLOCKED_DOOR_MESSAGE_BY_KIND = {
+  barred: "Some big old metal bars are in the way. What's the point of having a door here if they were gong to do that?",
+  key: "There's a little keyhole on this door. Don't tell it I said it's little in case it's sensitive about that.",
+  "boss-key": "The keyhole on this door is big and fancy. They've really got class around here."
+};
 
 ctx.imageSmoothingEnabled = false;
 
@@ -99,6 +107,7 @@ function render() {
     const roomProps = activeRoomPropsByRoom[roomIndex] ?? [];
 
     for (const enemy of roomEnemies) {
+      enemy.transparent = enemy.type !== "boss" && roomIndex === activeWorld.currentRoomIndex && session.roomEntryGraceTimer > 0;
       renderEnemy(ctx, enemy, offset);
     }
 
@@ -156,6 +165,8 @@ function gameLoop(timestamp) {
   } else if (isTransitioning(activeWorld)) {
     handleWorldTransition(activeWorld, session.player, activeRoomPropsByRoom, canvas, deltaTime);
   } else {
+    tickTimer(session, "roomEntryGraceTimer", deltaTime);
+
     if (input.map && session.activeWorldKey === "dungeon") {
       session.mode = GAME_STATE_MAP;
       input.map = false;
@@ -194,8 +205,19 @@ function gameLoop(timestamp) {
     resolveNpcCollisions(session.player, previousPlayerPosition, roomNpcs);
     resolveRoomPropCollisions(session.player, previousPlayerPosition, roomProps);
 
+    const blockedDoorKind = getBlockedDoorKindAtRoomEdge(session.player, activeWorld, canvas, session.inventory);
+
+    if (blockedDoorKind && !session.blockedDoorMessageShown) {
+      session.blockedDoorMessageShown = true;
+      constrainPlayerToRoom(session.player, activeWorld, canvas, session.inventory);
+      startBlockedDoorDialogue(session, blockedDoorKind);
+      render();
+      requestAnimationFrame(gameLoop);
+      return;
+    }
+
     if (!tryStartRoomTransition(session, canvas)) {
-      constrainPlayerToRoom(session.player, activeWorld, canvas);
+      constrainPlayerToRoom(session.player, activeWorld, canvas, session.inventory);
     } else {
       activeProjectilesByRoom[roomIndex] = [];
       render();
@@ -222,6 +244,10 @@ function gameLoop(timestamp) {
 
     for (const enemy of roomEnemies) {
       if (blockEnemyWithShield(enemy, shieldHitbox, session.player.facing)) {
+        continue;
+      }
+
+      if (enemy.type !== "boss" && session.roomEntryGraceTimer > 0) {
         continue;
       }
 
@@ -276,6 +302,16 @@ function getRoomProjectiles(projectilesByRoom, roomIndex) {
   }
 
   return projectilesByRoom[roomIndex];
+}
+
+function startBlockedDoorDialogue(session, doorKind) {
+  const message = BLOCKED_DOOR_MESSAGE_BY_KIND[doorKind];
+
+  if (!message) {
+    return;
+  }
+
+  startDialogue(session, createDialoguePages(ctx, canvas, message));
 }
 
 requestAnimationFrame(gameLoop);
