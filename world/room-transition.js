@@ -188,7 +188,7 @@ function startRoomTransition(session, toRoomIndex, directionX, directionY) {
   if (session.activeWorldKey === "dungeon") {
     session.progress.dungeon.visitedRooms[toRoomIndex] = true;
     session.roomEntryGraceTimer = 0.35;
-    session.blockedDoorMessageShown = false;
+    session.blockedDoorMessagesShown = {};
   }
 }
 

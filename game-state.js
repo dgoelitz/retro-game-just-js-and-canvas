@@ -50,7 +50,7 @@ export function createGameSession() {
     inventory: createInventory(),
     progress: createProgress(),
     roomEntryGraceTimer: 0,
-    blockedDoorMessageShown: false,
+    blockedDoorMessagesShown: {},
     dialogue: null,
     mode: GAME_STATE_PLAYING,
     gameOverDestination: OVERWORLD_START
@@ -132,6 +132,20 @@ export function applyDebugStart(session, debugStartKey) {
     return;
   }
 
+  if (debugStartKey === "room11-test") {
+    applyRoom11DebugStart(session, {
+      hasBossKey: true
+    });
+    return;
+  }
+
+  if (debugStartKey === "room11-no-boss-key-test") {
+    applyRoom11DebugStart(session, {
+      hasBossKey: false
+    });
+    return;
+  }
+
   if (debugStartKey !== "boss-test") {
     return;
   }
@@ -192,7 +206,7 @@ export function resetGameSession(session) {
   session.inventory = nextSession.inventory;
   session.progress = nextSession.progress;
   session.roomEntryGraceTimer = nextSession.roomEntryGraceTimer;
-  session.blockedDoorMessageShown = nextSession.blockedDoorMessageShown;
+  session.blockedDoorMessagesShown = nextSession.blockedDoorMessagesShown;
   session.dialogue = nextSession.dialogue;
   session.mode = nextSession.mode;
   session.gameOverDestination = nextSession.gameOverDestination;
@@ -208,7 +222,7 @@ export function respawnAfterGameOver(session) {
     dungeon: {}
   };
   session.roomEntryGraceTimer = 0;
-  session.blockedDoorMessageShown = false;
+  session.blockedDoorMessagesShown = {};
   session.dialogue = null;
   session.mode = GAME_STATE_PLAYING;
 
@@ -268,7 +282,7 @@ export function markCurrentRoomVisited(session) {
   const activeWorld = getActiveWorld(session);
   session.progress.dungeon.visitedRooms[activeWorld.currentRoomIndex] = true;
   session.roomEntryGraceTimer = 0.35;
-  session.blockedDoorMessageShown = false;
+  session.blockedDoorMessagesShown = {};
 }
 
 export function setGameOverDestination(session, destination) {
@@ -337,6 +351,52 @@ function applyBossTestRoomPropState(session) {
   markChestCollected(dungeonRoomPropsByRoom[9], "room-10-shield");
   markChestCollected(dungeonRoomPropsByRoom[10], "room-11-heart-piece");
   markSwitchActivated(dungeonRoomPropsByRoom[11], "room-12-switch");
+}
+
+function applyRoom11DebugStart(session, { hasBossKey }) {
+  session.activeWorldKey = "dungeon";
+  session.inventory.hasSword = true;
+  session.inventory.hasShield = true;
+  session.inventory.hasMap = true;
+  session.inventory.hasCompass = true;
+  session.inventory.hasBossKey = hasBossKey;
+  session.inventory.normalKeys = 1;
+
+  Object.assign(session.progress.dungeon.flags, {
+    room1Cleared: true,
+    room2TargetDestroyed: true,
+    mapChestOpened: true,
+    bossKeyChestOpened: hasBossKey,
+    room6LeftTargetDestroyed: true,
+    room6RightTargetDestroyed: true,
+    keyChestOpened: true,
+    compassChestOpened: true,
+    minibossIntroSeen: true,
+    minibossDefeated: true,
+    shieldChestOpened: true
+  });
+
+  session.enemiesByWorldKey.dungeon[0] = [];
+  session.enemiesByWorldKey.dungeon[9] = [];
+
+  const dungeonWorld = session.worldsByKey.dungeon;
+  dungeonWorld.currentRoomIndex = 8;
+  dungeonWorld.transition = null;
+  unlockDungeonDoorsForMinibossTest(dungeonWorld);
+  unlockDoor(dungeonWorld.rooms[9], "left");
+
+  const playerPosition = {
+    x: 76,
+    y: 10
+  };
+
+  setPlayerPosition(session.player, playerPosition);
+  markCurrentRoomVisited(session);
+  setGameOverDestination(session, {
+    worldKey: "dungeon",
+    roomIndex: 8,
+    playerPosition
+  });
 }
 
 function unlockDungeonDoorsForMinibossTest(dungeonWorld) {

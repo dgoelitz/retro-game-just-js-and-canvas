@@ -300,6 +300,21 @@ export function hitTargetProps(roomProps, projectiles) {
   }
 }
 
+export function resolveWeightSwitches(session, roomProps, playerHitbox) {
+  for (const prop of roomProps) {
+    if (prop.kind !== "switch" || prop.activated || prop.hidden || prop.destroyed) {
+      continue;
+    }
+
+    if (!isPressedByWeight(prop, playerHitbox)) {
+      continue;
+    }
+
+    prop.activated = true;
+    session.progress.dungeon.flags[prop.progressFlag] = true;
+  }
+}
+
 export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, canvas) {
   for (const prop of roomProps) {
     if (prop.hidden || prop.destroyed) {
@@ -312,12 +327,6 @@ export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, can
 
     if (!canInteract) {
       continue;
-    }
-
-    if (prop.kind === "switch" && !prop.activated) {
-      prop.activated = true;
-      session.progress.dungeon.flags[prop.progressFlag] = true;
-      return { interacted: true, destination: null };
     }
 
     if (prop.kind === "chest" && !prop.opened) {
@@ -346,6 +355,17 @@ export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, can
     interacted: false,
     destination: null
   };
+}
+
+function isPressedByWeight(prop, playerHitbox) {
+  const overlapLeft = Math.max(prop.x, playerHitbox.x);
+  const overlapRight = Math.min(prop.x + prop.width, playerHitbox.x + playerHitbox.width);
+  const overlapTop = Math.max(prop.y, playerHitbox.y);
+  const overlapBottom = Math.min(prop.y + prop.height, playerHitbox.y + playerHitbox.height);
+  const overlapWidth = overlapRight - overlapLeft;
+  const overlapHeight = overlapBottom - overlapTop;
+
+  return overlapWidth >= 4 && overlapHeight >= 4;
 }
 
 function applyChestReward(session, rewardKind) {

@@ -41,6 +41,7 @@ import {
   hitTargetProps,
   interactWithRoomProps,
   renderRoomProp,
+  resolveWeightSwitches,
   resolveRoomPropCollisions
 } from "./world/room-props.js";
 import {
@@ -207,8 +208,8 @@ function gameLoop(timestamp) {
 
     const blockedDoorKind = getBlockedDoorKindAtRoomEdge(session.player, activeWorld, canvas, session.inventory);
 
-    if (blockedDoorKind && !session.blockedDoorMessageShown) {
-      session.blockedDoorMessageShown = true;
+    if (blockedDoorKind && !session.blockedDoorMessagesShown[blockedDoorKind]) {
+      session.blockedDoorMessagesShown[blockedDoorKind] = true;
       constrainPlayerToRoom(session.player, activeWorld, canvas, session.inventory);
       startBlockedDoorDialogue(session, blockedDoorKind);
       render();
@@ -260,6 +261,7 @@ function gameLoop(timestamp) {
       damagePlayer(session.player);
     }
 
+    resolveWeightSwitches(session, roomProps, playerHitbox);
     updateDungeonRoomRules(session, ctx, canvas);
 
     if (input.interact) {

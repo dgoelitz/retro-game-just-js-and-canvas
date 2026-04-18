@@ -8,12 +8,18 @@ const TREASURE_MARKER_COLOR = "#ff004d";
 const HUD_TEXT_COLOR = "#fff1e8";
 const ROOM_SIZE = 10;
 const ROOM_GAP = 4;
+const MAP_AREA_PADDING = 10;
+const INVENTORY_COLUMN_WIDTH = 50;
 
 export function renderMapScreen(ctx, canvas, world, inventory, progress) {
   const panelBounds = getMapPanelBounds(canvas);
+  const mapAreaBounds = getMapAreaBounds(panelBounds);
+  const inventoryColumnBounds = getInventoryColumnBounds(panelBounds);
   const dungeonRooms = world.rooms;
   const roomPositions = dungeonRooms.map((room) => room.mapPosition);
   const mapBounds = getDungeonMapBounds(roomPositions);
+  const mapPixelSize = getDungeonMapPixelSize(mapBounds);
+  const mapOrigin = getCenteredMapOrigin(mapAreaBounds, mapPixelSize);
 
   ctx.fillStyle = MAP_BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -25,8 +31,8 @@ export function renderMapScreen(ctx, canvas, world, inventory, progress) {
   ctx.strokeRect(panelBounds.x + 0.5, panelBounds.y + 0.5, panelBounds.width - 1, panelBounds.height - 1);
 
   dungeonRooms.forEach((room, roomIndex) => {
-    const roomX = panelBounds.x + 10 + (room.mapPosition.x - mapBounds.minX) * (ROOM_SIZE + ROOM_GAP);
-    const roomY = panelBounds.y + 10 + (room.mapPosition.y - mapBounds.minY) * (ROOM_SIZE + ROOM_GAP);
+    const roomX = mapOrigin.x + (room.mapPosition.x - mapBounds.minX) * (ROOM_SIZE + ROOM_GAP);
+    const roomY = mapOrigin.y + (room.mapPosition.y - mapBounds.minY) * (ROOM_SIZE + ROOM_GAP);
     const hasVisitedRoom = progress.visitedRooms[roomIndex];
 
     if (!inventory.hasMap && !hasVisitedRoom) {
@@ -48,15 +54,21 @@ export function renderMapScreen(ctx, canvas, world, inventory, progress) {
     }
   });
 
-  renderMapInventory(ctx, panelBounds, inventory);
+  renderMapInventory(ctx, inventoryColumnBounds, inventory);
 }
 
-function renderMapInventory(ctx, panelBounds, inventory) {
+function renderMapInventory(ctx, inventoryColumnBounds, inventory) {
+  const lineHeight = 8;
+  const startX = inventoryColumnBounds.x;
+  const startY = inventoryColumnBounds.y;
+
   ctx.fillStyle = HUD_TEXT_COLOR;
   ctx.font = "6px monospace";
   ctx.textBaseline = "top";
-  ctx.fillText(`Keys: ${inventory.normalKeys}`, panelBounds.x + 10, panelBounds.y + panelBounds.height - 18);
-  ctx.fillText(`Boss: ${inventory.hasBossKey ? "Yes" : "No"}`, panelBounds.x + 58, panelBounds.y + panelBounds.height - 18);
+  ctx.fillText(`Keys: ${inventory.normalKeys}`, startX, startY);
+  ctx.fillText(`Boss Key: ${inventory.hasBossKey ? "Y" : "N"}`, startX, startY + lineHeight);
+  ctx.fillText(`Map: ${inventory.hasMap ? "Y" : "N"}`, startX, startY + lineHeight * 2);
+  ctx.fillText(`Magnet: ${inventory.hasCompass ? "Y" : "N"}`, startX, startY + lineHeight * 3);
 }
 
 function getMapPanelBounds(canvas) {
@@ -65,6 +77,24 @@ function getMapPanelBounds(canvas) {
     y: 8,
     width: canvas.width - 20,
     height: canvas.height - 16
+  };
+}
+
+function getMapAreaBounds(panelBounds) {
+  return {
+    x: panelBounds.x + MAP_AREA_PADDING,
+    y: panelBounds.y + MAP_AREA_PADDING,
+    width: panelBounds.width - INVENTORY_COLUMN_WIDTH - MAP_AREA_PADDING * 2,
+    height: panelBounds.height - MAP_AREA_PADDING * 2
+  };
+}
+
+function getInventoryColumnBounds(panelBounds) {
+  return {
+    x: panelBounds.x + panelBounds.width - INVENTORY_COLUMN_WIDTH - 6,
+    y: panelBounds.y + 16,
+    width: INVENTORY_COLUMN_WIDTH,
+    height: panelBounds.height - 32
   };
 }
 
@@ -80,6 +110,23 @@ function getDungeonMapBounds(roomPositions) {
     maxX: Number.NEGATIVE_INFINITY,
     maxY: Number.NEGATIVE_INFINITY
   });
+}
+
+function getDungeonMapPixelSize(mapBounds) {
+  const roomColumns = mapBounds.maxX - mapBounds.minX + 1;
+  const roomRows = mapBounds.maxY - mapBounds.minY + 1;
+
+  return {
+    width: roomColumns * ROOM_SIZE + (roomColumns - 1) * ROOM_GAP,
+    height: roomRows * ROOM_SIZE + (roomRows - 1) * ROOM_GAP
+  };
+}
+
+function getCenteredMapOrigin(mapAreaBounds, mapPixelSize) {
+  return {
+    x: Math.round(mapAreaBounds.x + (mapAreaBounds.width - mapPixelSize.width) / 2),
+    y: Math.round(mapAreaBounds.y + (mapAreaBounds.height - mapPixelSize.height) / 2)
+  };
 }
 
 function hasUnclaimedTreasure(progress, roomNumber) {

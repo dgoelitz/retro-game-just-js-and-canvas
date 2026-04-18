@@ -106,11 +106,12 @@ function createDungeonEnemiesByRoom() {
       createMinibossEnemy()
     ],
     10: [
-      createFixedTurretEnemy({ x: 6, y: 12, fixedDirection: "right", shotCooldown: 1.1 }),
-      createFixedTurretEnemy({ x: 6, y: 34, fixedDirection: "right", shotCooldown: 0.9 }),
-      createFixedTurretEnemy({ x: 6, y: 58, fixedDirection: "right", shotCooldown: 1.1 }),
-      createFixedTurretEnemy({ x: 150, y: 24, fixedDirection: "left", shotCooldown: 0.9 }),
-      createFixedTurretEnemy({ x: 150, y: 48, fixedDirection: "left", shotCooldown: 1.1 })
+      createFixedTurretEnemy({ x: 0, y: 28, fixedDirection: "right", shotCooldown: 1.1 }),
+      createFixedTurretEnemy({ x: 0, y: 56, fixedDirection: "right", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 152, y: 14, fixedDirection: "left", shotCooldown: 0.9 }),
+      createFixedTurretEnemy({ x: 152, y: 42, fixedDirection: "left", shotCooldown: 1.1 }),
+      createFixedTurretEnemy({ x: 24, y: 0, fixedDirection: "down", shotCooldown: 1.2 }),
+      createFixedTurretEnemy({ x: 128, y: 0, fixedDirection: "down", shotCooldown: 1.2 })
     ],
     12: [
       createBossEnemy()
