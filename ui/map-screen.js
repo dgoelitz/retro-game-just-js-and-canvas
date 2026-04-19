@@ -35,7 +35,10 @@ export function renderMapScreen(ctx, canvas, world, inventory, progress) {
     const roomY = mapOrigin.y + (room.mapPosition.y - mapBounds.minY) * (ROOM_SIZE + ROOM_GAP);
     const hasVisitedRoom = progress.visitedRooms[roomIndex];
 
-    if (!inventory.hasMap && !hasVisitedRoom) {
+    const shouldHideRoom = !inventory.hasMap && !hasVisitedRoom;
+
+    if (shouldHideRoom) {
+      renderHiddenRoomPlaceholder(ctx, roomX, roomY);
       return;
     }
 
@@ -55,6 +58,14 @@ export function renderMapScreen(ctx, canvas, world, inventory, progress) {
   });
 
   renderMapInventory(ctx, inventoryColumnBounds, inventory);
+}
+
+function renderHiddenRoomPlaceholder(ctx, roomX, roomY) {
+  ctx.save();
+  ctx.globalAlpha = 0;
+  ctx.fillStyle = UNVISITED_ROOM_COLOR;
+  ctx.fillRect(roomX, roomY, ROOM_SIZE, ROOM_SIZE);
+  ctx.restore();
 }
 
 function renderMapInventory(ctx, inventoryColumnBounds, inventory) {

@@ -233,6 +233,7 @@ export function respawnAfterGameOver(session) {
   setPlayerPosition(session.player, session.gameOverDestination.playerPosition);
 
   applyPersistentEnemyProgress(session);
+  applyPersistentDoorProgress(session);
   markCurrentRoomVisited(session);
 }
 
@@ -330,6 +331,38 @@ function applyPersistentEnemyProgress(session) {
 
   if (session.progress.dungeon.flags.bossDefeated) {
     session.enemiesByWorldKey.dungeon[12] = [];
+  }
+}
+
+function applyPersistentDoorProgress(session) {
+  const dungeonWorld = session.worldsByKey.dungeon;
+
+  if (session.progress.dungeon.flags.room1Cleared) {
+    unlockDoor(dungeonWorld.rooms[0], "top");
+  }
+
+  if (session.progress.dungeon.flags.room2TargetDestroyed) {
+    unlockDoor(dungeonWorld.rooms[1], "top");
+  }
+
+  if (session.progress.dungeon.flags.room6LeftTargetDestroyed && session.progress.dungeon.flags.room6RightTargetDestroyed) {
+    unlockDoor(dungeonWorld.rooms[5], "top");
+  }
+
+  if (session.progress.dungeon.flags.room12SwitchPressed) {
+    unlockDoor(dungeonWorld.rooms[10], "left");
+    unlockDoor(dungeonWorld.rooms[11], "right");
+  }
+
+  if (!session.progress.dungeon.flags.bossDefeated) {
+    setDoorKind(dungeonWorld.rooms[11], "top", "boss-key");
+    setDoorKind(dungeonWorld.rooms[12], "bottom", "unlocked");
+  }
+}
+
+function setDoorKind(room, edge, kind) {
+  if (room.doors?.[edge]) {
+    room.doors[edge].kind = kind;
   }
 }
 

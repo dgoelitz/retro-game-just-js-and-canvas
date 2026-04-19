@@ -208,7 +208,7 @@ function gameLoop(timestamp) {
 
     const blockedDoorKind = getBlockedDoorKindAtRoomEdge(session.player, activeWorld, canvas, session.inventory);
 
-    if (blockedDoorKind && !session.blockedDoorMessagesShown[blockedDoorKind]) {
+    if (shouldShowBlockedDoorMessage(session, blockedDoorKind, roomEnemies)) {
       session.blockedDoorMessagesShown[blockedDoorKind] = true;
       constrainPlayerToRoom(session.player, activeWorld, canvas, session.inventory);
       startBlockedDoorDialogue(session, blockedDoorKind);
@@ -314,6 +314,22 @@ function startBlockedDoorDialogue(session, doorKind) {
   }
 
   startDialogue(session, createDialoguePages(ctx, canvas, message));
+}
+
+function shouldShowBlockedDoorMessage(session, doorKind, roomEnemies) {
+  if (!doorKind || session.blockedDoorMessagesShown[doorKind]) {
+    return false;
+  }
+
+  if (doorKind === "barred" && hasActiveBossFight(roomEnemies)) {
+    return false;
+  }
+
+  return true;
+}
+
+function hasActiveBossFight(roomEnemies) {
+  return roomEnemies.some((enemy) => enemy.alive && (enemy.type === "boss" || enemy.type === "miniboss"));
 }
 
 function canUseRoomEntryGrace(enemy) {

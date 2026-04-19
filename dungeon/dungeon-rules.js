@@ -99,9 +99,12 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
   }
 
   if (roomIndex === 9) {
-    if (!hasLivingEnemy(roomEnemies, "miniboss") && !session.progress.dungeon.flags.minibossDefeated) {
+    const minibossIsAlive = hasLivingEnemy(roomEnemies, "miniboss");
+
+    setDoorKind(activeWorld.rooms[9], "left", minibossIsAlive ? "barred" : "unlocked");
+
+    if (!minibossIsAlive && !session.progress.dungeon.flags.minibossDefeated) {
       session.progress.dungeon.flags.minibossDefeated = true;
-      unlockDoor(activeWorld.rooms[9], "left");
       startDialogue(session, createDialoguePages(ctx, canvas, MINIBOSS_DEATH_TEXT), {
         onComplete() {
           revealRoomProp(roomProps, "room-10-shield", session.player);
@@ -157,8 +160,12 @@ function areAllEnemiesDefeated(roomEnemies) {
 
 function areAllKillableEnemiesDefeated(roomEnemies) {
   return roomEnemies
-    .filter((enemy) => enemy.type !== "turret")
-    .every((enemy) => !enemy.alive || enemy.invincible);
+    .filter(isKillableForRoomClear)
+    .every((enemy) => !enemy.alive || enemy.nonBlocking);
+}
+
+function isKillableForRoomClear(enemy) {
+  return enemy.type !== "turret";
 }
 
 function countLivingEnemies(roomEnemies, type) {
