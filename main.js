@@ -74,7 +74,7 @@ const input = createInput();
 const session = createGameSession();
 const debugStartKey = window.location.hash.replace("#", "");
 const BLOCKED_DOOR_MESSAGE_BY_KIND = {
-  barred: "Some big old metal bars are in the way. What's the point of having a door here if they were gong to do that?",
+  barred: "Some big old metal bars are in the way. What's the point of having a door here if they were going to do that?",
   key: "There's a little keyhole on this door. Don't tell it I said it's little in case it's sensitive about that.",
   "boss-key": "The keyhole on this door is big and fancy. They've really got class around here."
 };
