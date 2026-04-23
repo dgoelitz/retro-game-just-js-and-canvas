@@ -1,12 +1,8 @@
+import { DUNGEON_DIALOGUE_TEXT } from "../dialogue/dialogue-text.js";
 import { startDialogue } from "../dialogue/dialogue-state.js";
 import { createDialoguePages } from "../dialogue/dialogue-pages.js";
 import { GAME_STATE_PLAYING, getActiveRoomPropsByRoom, getActiveWorld } from "../game-state.js";
 import { rectanglesOverlap } from "../game-utils.js";
-
-const MINIBOSS_INTRO_TEXT = "Oh wow hey, you kind of took me by surprise. Been a while since someone showed up here. Ok then, let's hurry this up. It's a really good part in the show I'm watching.";
-const MINIBOSS_DEATH_TEXT = "Noooooo! I'll never find out if they kissed or not!";
-const BOSS_INTRO_TEXT = "Pshhh, look at this loser. I'm so tough nobody can ever hurt me, obviously. I mean like maybe if they had a shield but when would that be? Seems unlikely. What a loser.";
-const BOSS_DEATH_TEXT = "A shield... I cannot believe it. How could I have been such a fool? I should have known there might be a shield somewhere in this world... Goodbye cruel cruel world... Shield-having world, goodbye...";
 
 export function handleDungeonRoomEntry(session, ctx, canvas) {
   if (session.activeWorldKey !== "dungeon" || session.mode !== GAME_STATE_PLAYING) {
@@ -24,13 +20,13 @@ export function handleDungeonRoomEntry(session, ctx, canvas) {
 
   if (roomIndex === 9 && !session.progress.dungeon.flags.minibossIntroSeen) {
     session.progress.dungeon.flags.minibossIntroSeen = true;
-    startDialogue(session, createDialoguePages(ctx, canvas, MINIBOSS_INTRO_TEXT));
+    startDialogue(session, createDialoguePages(ctx, canvas, DUNGEON_DIALOGUE_TEXT.minibossIntro));
     return;
   }
 
   if (roomIndex === 12 && !session.progress.dungeon.flags.bossIntroSeen) {
     session.progress.dungeon.flags.bossIntroSeen = true;
-    startDialogue(session, createDialoguePages(ctx, canvas, BOSS_INTRO_TEXT));
+    startDialogue(session, createDialoguePages(ctx, canvas, DUNGEON_DIALOGUE_TEXT.bossIntro));
   }
 }
 
@@ -105,7 +101,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
 
     if (!minibossIsAlive && !session.progress.dungeon.flags.minibossDefeated) {
       session.progress.dungeon.flags.minibossDefeated = true;
-      startDialogue(session, createDialoguePages(ctx, canvas, MINIBOSS_DEATH_TEXT), {
+      startDialogue(session, createDialoguePages(ctx, canvas, DUNGEON_DIALOGUE_TEXT.minibossDefeated), {
         onComplete() {
           revealRoomProp(roomProps, "room-10-shield", session.player);
         }
@@ -137,7 +133,7 @@ export function updateDungeonRoomRules(session, ctx, canvas) {
 
     if (!hasLivingEnemy(roomEnemies, "boss") && !session.progress.dungeon.flags.bossDefeated) {
       session.progress.dungeon.flags.bossDefeated = true;
-      startDialogue(session, createDialoguePages(ctx, canvas, BOSS_DEATH_TEXT), {
+      startDialogue(session, createDialoguePages(ctx, canvas, DUNGEON_DIALOGUE_TEXT.bossDefeated), {
         onComplete() {
           revealRoomProp(roomProps, "room-13-final-treasure", session.player);
         }

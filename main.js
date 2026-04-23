@@ -1,4 +1,5 @@
 import { createInput } from "./input.js";
+import { BLOCKED_DOOR_DIALOGUE_BY_KIND } from "./dialogue/dialogue-text.js";
 import { advanceDialogue, startDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
 import { createDialoguePages } from "./dialogue/dialogue-pages.js";
 import {
@@ -73,11 +74,6 @@ const ctx = canvas.getContext("2d");
 const input = createInput();
 const session = createGameSession();
 const debugStartKey = window.location.hash.replace("#", "");
-const BLOCKED_DOOR_MESSAGE_BY_KIND = {
-  barred: "Some big old metal bars are in the way. What's the point of having a door here if they were going to do that?",
-  key: "There's a little keyhole on this door. Don't tell it I said it's little in case it's sensitive about that.",
-  "boss-key": "The keyhole on this door is big and fancy. They've really got class around here."
-};
 
 ctx.imageSmoothingEnabled = false;
 
@@ -307,7 +303,7 @@ function getRoomProjectiles(projectilesByRoom, roomIndex) {
 }
 
 function startBlockedDoorDialogue(session, doorKind) {
-  const message = BLOCKED_DOOR_MESSAGE_BY_KIND[doorKind];
+  const message = BLOCKED_DOOR_DIALOGUE_BY_KIND[doorKind];
 
   if (!message) {
     return;

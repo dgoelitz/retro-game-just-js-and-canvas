@@ -1,3 +1,4 @@
+import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../dialogue/dialogue-text.js";
 import { startDialogue } from "../dialogue/dialogue-state.js";
 import { createDialoguePages } from "../dialogue/dialogue-pages.js";
 import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
@@ -13,16 +14,6 @@ const TARGET_COLOR = "#94b0c2";
 const TARGET_CENTER_COLOR = "#e43b44";
 const SWITCH_COLOR = "#c2c3c7";
 const SWITCH_ACTIVE_COLOR = "#00e756";
-
-const ITEM_MESSAGE_BY_REWARD_KIND = {
-  "normal-key": "You found - like - a normalish looking kinda basic sorta key.",
-  "boss-key": "Wow this key looks important. I wonder if this key is different from other keys.",
-  shield: "You got the shield! Hold the Shift key to block with it. Ok then, defend away!",
-  map: "You got the dungeon map. My, how unexpected. Never thought there would be a map for a dungeon. Now I've seen everything. Press the Tab key to open the map.",
-  compass: "You got a magnet that somehow will show on your map where stuff is. Don't ask me. Press the Tab key to open the map.",
-  "piece-of-heart": "You got part of a new health container. Probably you know how this works so I won't bore you with the details.",
-  "final-treasure": "Congrats! You completed the game up to the end of this version."
-};
 
 export function createRoomPropsByRoom() {
   return {
@@ -334,7 +325,7 @@ export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, can
       session.progress.dungeon.flags[prop.progressFlag] = true;
       applyChestReward(session, prop.rewardKind);
 
-      const message = ITEM_MESSAGE_BY_REWARD_KIND[prop.rewardKind];
+      const message = ITEM_DIALOGUE_BY_REWARD_KIND[prop.rewardKind];
 
       if (message) {
         startDialogue(session, createDialoguePages(ctx, canvas, message));
