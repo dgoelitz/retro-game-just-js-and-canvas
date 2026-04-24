@@ -1,5 +1,5 @@
 import { createInput } from "./input.js";
-import { BLOCKED_DOOR_DIALOGUE_BY_KIND } from "./dialogue/dialogue-text.js";
+import { BLOCKED_DOOR_DIALOGUE_BY_KIND, GAME_DIALOGUE_TEXT } from "./dialogue/dialogue-text.js";
 import { advanceDialogue, startDialogue, updateDialogue } from "./dialogue/dialogue-state.js";
 import { createDialoguePages } from "./dialogue/dialogue-pages.js";
 import {
@@ -79,6 +79,8 @@ ctx.imageSmoothingEnabled = false;
 
 if (debugStartKey) {
   applyDebugStart(session, debugStartKey);
+} else {
+  startOpeningHintDialogue();
 }
 
 let lastTime = 0;
@@ -310,6 +312,10 @@ function startBlockedDoorDialogue(session, doorKind) {
   }
 
   startDialogue(session, createDialoguePages(ctx, canvas, message));
+}
+
+function startOpeningHintDialogue() {
+  startDialogue(session, createDialoguePages(ctx, canvas, GAME_DIALOGUE_TEXT.openingHint));
 }
 
 function shouldShowBlockedDoorMessage(session, doorKind, roomEnemies) {

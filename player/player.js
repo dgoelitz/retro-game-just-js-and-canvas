@@ -3,6 +3,7 @@ import { renderShield, updateShield } from "./shield.js";
 import { renderSword, updateSword } from "./sword.js";
 
 const PLAYER_COLOR = "#ffcc00";
+const PLAYER_FACING_COLOR = "#1a1c2c";
 
 export function createPlayer() {
   return {
@@ -15,7 +16,7 @@ export function createPlayer() {
     health: 3,
     maxHealth: 3,
     invulnerableTimer: 0,
-    invulnerableDuration: 1.8,
+    invulnerableDuration: 2.2,
     flashInterval: 0.2
   };
 }
@@ -70,6 +71,7 @@ export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
   renderShield(ctx, drawPlayer, shield, offset);
   ctx.fillStyle = PLAYER_COLOR;
   ctx.fillRect(drawPlayer.x + offset.x, drawPlayer.y + offset.y, drawPlayer.width, drawPlayer.height);
+  renderFacingIndicator(ctx, drawPlayer, offset);
   renderSword(ctx, drawPlayer, sword, offset);
   ctx.restore();
 }
@@ -129,6 +131,54 @@ function getPlayerAlpha(player) {
   const flashPhase = Math.floor(elapsedFlashTime / player.flashInterval);
 
   return flashPhase % 2 === 0 ? 0.45 : 1;
+}
+
+function renderFacingIndicator(ctx, player, offset) {
+  const indicator = getFacingIndicator(player, offset);
+
+  ctx.fillStyle = PLAYER_FACING_COLOR;
+  ctx.fillRect(indicator.x, indicator.y, indicator.width, indicator.height);
+}
+
+function getFacingIndicator(player, offset) {
+  const drawX = player.x + offset.x;
+  const drawY = player.y + offset.y;
+  const centerX = drawX + Math.floor(player.width / 2) - 1;
+  const centerY = drawY + Math.floor(player.height / 2) - 1;
+
+  if (player.facing === "left") {
+    return {
+      x: drawX,
+      y: centerY,
+      width: 2,
+      height: 2
+    };
+  }
+
+  if (player.facing === "right") {
+    return {
+      x: drawX + player.width - 2,
+      y: centerY,
+      width: 2,
+      height: 2
+    };
+  }
+
+  if (player.facing === "up") {
+    return {
+      x: centerX,
+      y: drawY,
+      width: 2,
+      height: 2
+    };
+  }
+
+  return {
+    x: centerX,
+    y: drawY + player.height - 2,
+    width: 2,
+    height: 2
+  };
 }
 
 function getDrawPlayer(player) {

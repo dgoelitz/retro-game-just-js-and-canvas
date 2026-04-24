@@ -4,6 +4,10 @@ export const BLOCKED_DOOR_DIALOGUE_BY_KIND = {
   "boss-key": "The keyhole on this door is big and fancy. They've really got class around here."
 };
 
+export const GAME_DIALOGUE_TEXT = {
+  openingHint: "Red squares are enemies. You can't attack yet. Find someone in town who can help you."
+};
+
 export const NPC_DIALOGUE_TEXT = {
   townGuideFirstMeeting: "Welcome to the town. You've been out in the wilderness? That's not safe without a sword! Here I have a cheap one you can have.",
   townGuideRepeat: "Treat that sword well and it will treat you well."

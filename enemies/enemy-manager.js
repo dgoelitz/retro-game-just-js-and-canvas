@@ -126,6 +126,7 @@ function createPatrolEnemy({ x = 100, y = 48, patrolMinX = 88, patrolMaxX = 112 
     y,
     homeX: x,
     homeY: y,
+    health: 1,
     patrolMinX,
     patrolMaxX
   });

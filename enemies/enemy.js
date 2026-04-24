@@ -10,6 +10,7 @@ const ENEMY_COLOR_BY_TYPE = {
   miniboss: "#ff77a8",
   boss: "#ff004d"
 };
+const STUNNED_ENEMY_FLASH_COLOR = "#fff1e8";
 
 const ENEMY_MODE_PATROL = "patrol";
 const ENEMY_MODE_CHASE = "chase";
@@ -60,6 +61,9 @@ export function createEnemy(overrides = {}) {
     impactPauseDuration: 0.22,
     bossTurretCount: 1,
     bossSummoned: false,
+    stunHitCount: 0,
+    maxHitsPerStun: 3,
+    hitPauseTimer: 0,
     alive: true,
     invincible: false,
     nonBlocking: false,
@@ -69,6 +73,7 @@ export function createEnemy(overrides = {}) {
 
 export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomEnemies) {
   tickTimer(enemy, "invulnerableTimer", deltaTime);
+  tickTimer(enemy, "hitPauseTimer", deltaTime);
 
   if (!enemy.alive) {
     return;
@@ -162,6 +167,7 @@ export function resolveProjectileHitsOnEnemies(roomEnemies, projectiles) {
         enemy.abilityTimer = 2.1;
         enemy.invulnerableTimer = 0;
         enemy.shootTimer = enemy.spawnCooldown;
+        enemy.hitPauseTimer = 0.12;
         removeBossTurrets(roomEnemies);
         break;
       }
@@ -170,7 +176,7 @@ export function resolveProjectileHitsOnEnemies(roomEnemies, projectiles) {
 }
 
 export function touchesEnemy(enemy, hitbox) {
-  if (!enemy.alive || !hitbox) {
+  if (!enemy.alive || !hitbox || isEnemyStunned(enemy) || enemy.hitPauseTimer > 0) {
     return false;
   }
 
@@ -205,7 +211,7 @@ export function renderEnemy(ctx, enemy, offset = ZERO_OFFSET) {
   }
 
   const drawEnemy = getDrawEnemy(enemy);
-  const color = ENEMY_COLOR_BY_TYPE[enemy.type] ?? ENEMY_COLOR_BY_TYPE.patrol;
+  const color = getEnemyColor(enemy);
 
   ctx.save();
   ctx.globalAlpha = getEnemyAlpha(enemy);
@@ -324,6 +330,10 @@ function renderSnake(ctx, enemy, offset) {
 }
 
 function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
+  if (enemy.hitPauseTimer > 0) {
+    return;
+  }
+
   enemy.abilityTimer += deltaTime;
 
   if (enemy.mode === MINIBOSS_MODE_THROW) {
@@ -372,6 +382,7 @@ function updateMiniboss(enemy, player, deltaTime, canvas, projectiles) {
     if (enemy.abilityTimer >= 4.2) {
       enemy.mode = MINIBOSS_MODE_REST;
       enemy.abilityTimer = 0;
+      enemy.stunHitCount = 0;
       enemy.x = canvas.width / 2 - enemy.width / 2;
       enemy.y = 18;
     }
@@ -408,6 +419,10 @@ function getMinibossSpinBounds(enemy, canvas) {
 }
 
 function updateBoss(enemy, player, deltaTime, canvas, roomEnemies) {
+  if (enemy.hitPauseTimer > 0) {
+    return;
+  }
+
   if (enemy.mode === BOSS_MODE_IMPACT) {
     tickTimer(enemy, "abilityTimer", deltaTime);
 
@@ -522,10 +537,22 @@ function applyEnemyDamage(enemy, amount) {
   enemy.health -= amount;
   enemy.invulnerableTimer = enemy.invulnerableDuration;
 
+  if (enemy.type === "miniboss") {
+    enemy.stunHitCount += 1;
+
+    if (enemy.health > 0 && enemy.stunHitCount >= enemy.maxHitsPerStun) {
+      enemy.mode = MINIBOSS_MODE_THROW;
+      enemy.abilityTimer = 0;
+      enemy.shootTimer = 0.8;
+      enemy.hitPauseTimer = 0.12;
+    }
+  }
+
   if (enemy.type === "boss") {
     enemy.mode = BOSS_MODE_SLAM;
     enemy.abilityTimer = 0;
     enemy.shootTimer = enemy.spawnCooldown;
+    enemy.hitPauseTimer = 0.12;
   }
 
   if (enemy.health <= 0) {
@@ -544,6 +571,28 @@ function getEnemyAlpha(enemy) {
   }
 
   return 1;
+}
+
+export function isEnemyStunned(enemy) {
+  return enemy.type === "miniboss" && enemy.mode === MINIBOSS_MODE_REST
+    || enemy.type === "boss" && enemy.mode === BOSS_MODE_STUNNED;
+}
+
+function getEnemyColor(enemy) {
+  const baseColor = ENEMY_COLOR_BY_TYPE[enemy.type] ?? ENEMY_COLOR_BY_TYPE.patrol;
+
+  if (!isEnemyStunned(enemy)) {
+    return baseColor;
+  }
+
+  return isUsingStunnedFlashColor(enemy) ? STUNNED_ENEMY_FLASH_COLOR : baseColor;
+}
+
+function isUsingStunnedFlashColor(enemy) {
+  const stunTimer = enemy.abilityTimer;
+  const flashPhase = Math.floor(stunTimer / enemy.flashInterval);
+
+  return flashPhase % 2 === 0;
 }
 
 function isPlayerInChaseRange(enemy, player) {
