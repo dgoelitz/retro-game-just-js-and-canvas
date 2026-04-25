@@ -25,7 +25,8 @@ Then open [http://localhost:8000](http://localhost:8000).
 
 ## Project structure
 
-- `main.js`: bootstraps the canvas and runs the frame loop
+- `main.js`: bootstraps the canvas and starts the game
+- `game/`: high-level frame update and rendering flow
 - `game-state.js`: creates and resets the current game session
 - `input.js`: tracks keyboard input state
 - `game-utils.js`: shared utility helpers
