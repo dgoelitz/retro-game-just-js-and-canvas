@@ -1,5 +1,6 @@
 import { clampToCanvas, rectanglesOverlap, tickTimer, ZERO_OFFSET } from "../game-utils.js";
 import { createProjectile } from "../combat/projectiles.js";
+import { getRectangularPathPosition } from "./enemy-paths.js";
 
 const ENEMY_COLOR_BY_TYPE = {
   patrol: "#e43636",
@@ -675,39 +676,6 @@ function getSnakeSegments(enemy) {
   }
 
   return segments;
-}
-
-function getRectangularPathPosition(pathRect, progress) {
-  const width = pathRect.right - pathRect.left;
-  const height = pathRect.bottom - pathRect.top;
-  const perimeter = (width + height) * 2;
-  const distance = ((progress % perimeter) + perimeter) % perimeter;
-
-  if (distance < width) {
-    return {
-      x: pathRect.left + distance,
-      y: pathRect.top
-    };
-  }
-
-  if (distance < width + height) {
-    return {
-      x: pathRect.right,
-      y: pathRect.top + distance - width
-    };
-  }
-
-  if (distance < width * 2 + height) {
-    return {
-      x: pathRect.right - (distance - width - height),
-      y: pathRect.bottom
-    };
-  }
-
-  return {
-    x: pathRect.left,
-    y: pathRect.bottom - (distance - width * 2 - height)
-  };
 }
 
 function getCenter(entity) {

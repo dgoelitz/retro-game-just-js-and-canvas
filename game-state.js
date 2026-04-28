@@ -1,4 +1,5 @@
 import { createEnemiesByWorldKey } from "./enemies/enemy-manager.js";
+import { applyDebugStart as applyGameDebugStart } from "./game-state-debug.js";
 import { createNpcsByWorldKey } from "./npcs/npc-manager.js";
 import { createPlayer, setPlayerPosition } from "./player/player.js";
 import { createShield } from "./player/shield.js";
@@ -62,133 +63,11 @@ export function createGameSession() {
 }
 
 export function applyDebugStart(session, debugStartKey) {
-  if (debugStartKey === "dungeon-start") {
-    session.activeWorldKey = "dungeon";
-    session.inventory.hasSword = true;
-    session.progress.dungeon.flags.room1Cleared = true;
-    session.enemiesByWorldKey.dungeon[0] = [];
-    session.worldsByKey.dungeon.currentRoomIndex = DUNGEON_START.roomIndex;
-    session.worldsByKey.dungeon.transition = null;
-    setPlayerPosition(session.player, DUNGEON_START.playerPosition);
-    setGameOverDestination(session, DUNGEON_START);
-    markCurrentRoomVisited(session);
-    return;
-  }
-
-  if (debugStartKey === "room5-test") {
-    session.activeWorldKey = "dungeon";
-    session.inventory.hasSword = true;
-    session.inventory.hasShield = true;
-    session.progress.dungeon.flags.room1Cleared = true;
-    session.enemiesByWorldKey.dungeon[0] = [];
-    session.worldsByKey.dungeon.currentRoomIndex = DUNGEON_START.roomIndex;
-    session.worldsByKey.dungeon.transition = null;
-    setPlayerPosition(session.player, DUNGEON_START.playerPosition);
-    setGameOverDestination(session, DUNGEON_START);
-    markCurrentRoomVisited(session);
-    return;
-  }
-
-  if (debugStartKey === "miniboss-test") {
-    session.activeWorldKey = "dungeon";
-    session.inventory.hasSword = true;
-    session.inventory.hasMap = true;
-    session.inventory.hasCompass = true;
-    session.inventory.hasBossKey = true;
-    session.inventory.normalKeys = 1;
-
-    Object.assign(session.progress.dungeon.flags, {
-      room1Cleared: true,
-      room2TargetDestroyed: true,
-      mapChestOpened: true,
-      bossKeyChestOpened: true,
-      room6LeftTargetDestroyed: true,
-      room6RightTargetDestroyed: true,
-      keyChestOpened: true,
-      compassChestOpened: true
-    });
-
-    session.enemiesByWorldKey.dungeon[0] = [];
-
-    const dungeonWorld = session.worldsByKey.dungeon;
-    dungeonWorld.currentRoomIndex = 8;
-    dungeonWorld.transition = null;
-    unlockDungeonDoorsForMinibossTest(dungeonWorld);
-
-    setPlayerPosition(session.player, {
-      x: 132,
-      y: 38
-    });
-
-    markCurrentRoomVisited(session);
-    setGameOverDestination(session, {
-      worldKey: "dungeon",
-      roomIndex: 8,
-      playerPosition: {
-        x: 132,
-        y: 38
-      }
-    });
-    return;
-  }
-
-  if (debugStartKey === "room11-test") {
-    applyRoom11DebugStart(session, {
-      hasBossKey: true
-    });
-    return;
-  }
-
-  if (debugStartKey === "room11-no-boss-key-test") {
-    applyRoom11DebugStart(session, {
-      hasBossKey: false
-    });
-    return;
-  }
-
-  if (debugStartKey !== "boss-test") {
-    return;
-  }
-
-  session.activeWorldKey = "dungeon";
-  session.inventory.hasSword = true;
-  session.inventory.hasShield = true;
-  session.inventory.hasMap = true;
-  session.inventory.hasCompass = true;
-  session.inventory.hasBossKey = true;
-  session.inventory.normalKeys = 0;
-  session.inventory.heartPieceCount = 1;
-
-  session.progress.dungeon.visitedRooms = Array(13).fill(false).map((_, index) => index <= 11);
-  Object.assign(session.progress.dungeon.flags, {
-    room1Cleared: true,
-    room2TargetDestroyed: true,
-    mapChestOpened: true,
-    bossKeyChestOpened: true,
-    room6LeftTargetDestroyed: true,
-    room6RightTargetDestroyed: true,
-    keyChestOpened: true,
-    compassChestOpened: true,
-    minibossIntroSeen: true,
-    minibossDefeated: true,
-    shieldChestOpened: true,
-    heartPieceChestOpened: true,
-    room12SwitchPressed: true
+  applyGameDebugStart(session, debugStartKey, {
+    dungeonStart: DUNGEON_START,
+    markCurrentRoomVisited,
+    setGameOverDestination
   });
-
-  const dungeonWorld = session.worldsByKey.dungeon;
-  dungeonWorld.currentRoomIndex = 11;
-  dungeonWorld.transition = null;
-  unlockDungeonDoorsForBossTest(dungeonWorld);
-
-  setPlayerPosition(session.player, {
-    x: 76,
-    y: 10
-  });
-
-  clearDungeonRoomsBeforeBoss(session);
-  applyBossTestRoomPropState(session);
-  setGameOverDestination(session, DUNGEON_START);
 }
 
 export function resetGameSession(session) {
@@ -366,114 +245,8 @@ function setDoorKind(room, edge, kind) {
   }
 }
 
-function clearDungeonRoomsBeforeBoss(session) {
-  for (let roomIndex = 0; roomIndex <= 11; roomIndex += 1) {
-    session.enemiesByWorldKey.dungeon[roomIndex] = [];
-  }
-}
-
-function applyBossTestRoomPropState(session) {
-  const dungeonRoomPropsByRoom = session.roomPropsByWorldKey.dungeon;
-
-  markChestCollected(dungeonRoomPropsByRoom[2], "room-3-map");
-  markChestCollected(dungeonRoomPropsByRoom[4], "room-5-boss-key");
-  markTargetDestroyed(dungeonRoomPropsByRoom[5], "room-6-left-target");
-  markTargetDestroyed(dungeonRoomPropsByRoom[5], "room-6-right-target");
-  markChestCollected(dungeonRoomPropsByRoom[6], "room-7-key");
-  markChestCollected(dungeonRoomPropsByRoom[7], "room-8-compass");
-  markChestCollected(dungeonRoomPropsByRoom[9], "room-10-shield");
-  markChestCollected(dungeonRoomPropsByRoom[10], "room-11-heart-piece");
-  markSwitchActivated(dungeonRoomPropsByRoom[11], "room-12-switch");
-}
-
-function applyRoom11DebugStart(session, { hasBossKey }) {
-  session.activeWorldKey = "dungeon";
-  session.inventory.hasSword = true;
-  session.inventory.hasShield = true;
-  session.inventory.hasMap = true;
-  session.inventory.hasCompass = true;
-  session.inventory.hasBossKey = hasBossKey;
-  session.inventory.normalKeys = 1;
-
-  Object.assign(session.progress.dungeon.flags, {
-    room1Cleared: true,
-    room2TargetDestroyed: true,
-    mapChestOpened: true,
-    bossKeyChestOpened: hasBossKey,
-    room6LeftTargetDestroyed: true,
-    room6RightTargetDestroyed: true,
-    keyChestOpened: true,
-    compassChestOpened: true,
-    minibossIntroSeen: true,
-    minibossDefeated: true,
-    shieldChestOpened: true
-  });
-
-  session.enemiesByWorldKey.dungeon[0] = [];
-  session.enemiesByWorldKey.dungeon[9] = [];
-
-  const dungeonWorld = session.worldsByKey.dungeon;
-  dungeonWorld.currentRoomIndex = 8;
-  dungeonWorld.transition = null;
-  unlockDungeonDoorsForMinibossTest(dungeonWorld);
-  unlockDoor(dungeonWorld.rooms[9], "left");
-
-  const playerPosition = {
-    x: 76,
-    y: 10
-  };
-
-  setPlayerPosition(session.player, playerPosition);
-  markCurrentRoomVisited(session);
-  setGameOverDestination(session, {
-    worldKey: "dungeon",
-    roomIndex: 8,
-    playerPosition
-  });
-}
-
-function unlockDungeonDoorsForMinibossTest(dungeonWorld) {
-  unlockDoor(dungeonWorld.rooms[0], "top");
-  unlockDoor(dungeonWorld.rooms[1], "top");
-  unlockDoor(dungeonWorld.rooms[5], "top");
-}
-
-function unlockDungeonDoorsForBossTest(dungeonWorld) {
-  unlockDoor(dungeonWorld.rooms[0], "top");
-  unlockDoor(dungeonWorld.rooms[1], "top");
-  unlockDoor(dungeonWorld.rooms[5], "top");
-  unlockDoor(dungeonWorld.rooms[9], "left");
-  unlockDoor(dungeonWorld.rooms[10], "left");
-  unlockDoor(dungeonWorld.rooms[11], "right");
-}
-
 function unlockDoor(room, edge) {
   if (room.doors?.[edge]) {
     room.doors[edge].kind = "unlocked";
-  }
-}
-
-function markChestCollected(roomProps = [], id) {
-  const chest = roomProps.find((prop) => prop.id === id);
-
-  if (chest) {
-    chest.hidden = false;
-    chest.opened = true;
-  }
-}
-
-function markTargetDestroyed(roomProps = [], id) {
-  const target = roomProps.find((prop) => prop.id === id);
-
-  if (target) {
-    target.destroyed = true;
-  }
-}
-
-function markSwitchActivated(roomProps = [], id) {
-  const roomSwitch = roomProps.find((prop) => prop.id === id);
-
-  if (roomSwitch) {
-    roomSwitch.activated = true;
   }
 }

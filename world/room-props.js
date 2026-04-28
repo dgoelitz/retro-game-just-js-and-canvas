@@ -1,8 +1,8 @@
+import { startTextDialogue } from "../dialogue/dialogue-helpers.js";
 import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../dialogue/dialogue-text.js";
-import { startDialogue } from "../dialogue/dialogue-state.js";
-import { createDialoguePages } from "../dialogue/dialogue-pages.js";
 import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
-import { WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
+import { WALL_COLOR } from "./room-data.js";
+import { createDungeonRoomPropsByRoom, createOverworldRoomPropsByRoom } from "./room-prop-layouts.js";
 
 const BUSH_COLOR = "#00a84f";
 const BUSH_HIGHLIGHT_COLOR = "#6abe30";
@@ -15,166 +15,9 @@ const TARGET_CENTER_COLOR = "#e43b44";
 const SWITCH_COLOR = "#c2c3c7";
 const SWITCH_ACTIVE_COLOR = "#00e756";
 
-export function createRoomPropsByRoom() {
-  return {
-    2: [
-      createWallBlock({ x: 156, y: 0, width: WALL_THICKNESS, height: 36 }),
-      createBush({ x: 152, y: 36 }),
-      createBush({ x: 152, y: 44 }),
-      createBush({ x: 152, y: 52 }),
-      createBush({ x: 152, y: 60 }),
-      createWallBlock({ x: 156, y: 68, width: WALL_THICKNESS, height: 22 })
-    ],
-    5: [
-      createWallBlock({ x: 0, y: 0, width: WALL_THICKNESS, height: 36 }),
-      createWallBlock({ x: 0, y: 68, width: WALL_THICKNESS, height: 22 }),
-      createBush({ x: 56, y: 24 }),
-      createBush({ x: 64, y: 24 }),
-      createBush({ x: 72, y: 24 }),
-      createBush({ x: 104, y: 72 }),
-      createBush({ x: 112, y: 72 }),
-      createBush({ x: 120, y: 72 })
-    ],
-    6: [
-      createBush({ x: 28, y: 78 }),
-      createBush({ x: 36, y: 78 }),
-      createBush({ x: 44, y: 78 }),
-      createBush({ x: 100, y: 78 }),
-      createBush({ x: 108, y: 78 }),
-      createBush({ x: 116, y: 78 }),
-      createDungeonEntrance({
-        x: 66,
-        y: 12,
-        destination: {
-          worldKey: "dungeon",
-          roomIndex: 0,
-          playerX: 76,
-          playerY: 66
-        }
-      })
-    ]
-  };
-}
-
-export function createDungeonRoomPropsByRoom() {
-  return {
-    0: [
-      createDungeonExit({
-        x: 66,
-        y: 72,
-        destination: {
-          worldKey: "overworld",
-          roomIndex: 6,
-          playerX: 76,
-          playerY: 24
-        }
-      })
-    ],
-    1: [
-      createTarget({
-        id: "room-2-target",
-        x: 120,
-        y: 0,
-        progressFlag: "room2TargetDestroyed"
-      })
-    ],
-    2: [
-      createChest({
-        id: "room-3-map",
-        x: 72,
-        y: 40,
-        rewardKind: "map",
-        progressFlag: "mapChestOpened",
-        hidden: true
-      })
-    ],
-    4: [
-      createChest({
-        id: "room-5-boss-key",
-        x: 72,
-        y: 40,
-        rewardKind: "boss-key",
-        progressFlag: "bossKeyChestOpened",
-        hidden: true
-      })
-    ],
-    5: [
-      createTarget({
-        id: "room-6-left-target",
-        x: 0,
-        y: 4,
-        progressFlag: "room6LeftTargetDestroyed"
-      }),
-      createTarget({
-        id: "room-6-right-target",
-        x: 152,
-        y: 4,
-        progressFlag: "room6RightTargetDestroyed"
-      })
-    ],
-    6: [
-      createChest({
-        id: "room-7-key",
-        x: 72,
-        y: 10,
-        rewardKind: "normal-key",
-        progressFlag: "keyChestOpened"
-      })
-    ],
-    7: [
-      createChest({
-        id: "room-8-compass",
-        x: 72,
-        y: 40,
-        rewardKind: "compass",
-        progressFlag: "compassChestOpened",
-        hidden: true
-      })
-    ],
-    9: [
-      createChest({
-        id: "room-10-shield",
-        x: 72,
-        y: 40,
-        rewardKind: "shield",
-        progressFlag: "shieldChestOpened",
-        hidden: true
-      })
-    ],
-    10: [
-      createChest({
-        id: "room-11-heart-piece",
-        x: 72,
-        y: 40,
-        rewardKind: "piece-of-heart",
-        progressFlag: "heartPieceChestOpened",
-        hidden: true
-      })
-    ],
-    11: [
-      createSwitch({
-        id: "room-12-switch",
-        x: 128,
-        y: 40,
-        progressFlag: "room12SwitchPressed"
-      })
-    ],
-    12: [
-      createChest({
-        id: "room-13-final-treasure",
-        x: 72,
-        y: 40,
-        rewardKind: "final-treasure",
-        progressFlag: "finalTreasureChestOpened",
-        hidden: true
-      })
-    ]
-  };
-}
-
 export function createRoomPropsByWorldKey() {
   return {
-    overworld: createRoomPropsByRoom(),
+    overworld: createOverworldRoomPropsByRoom(),
     dungeon: createDungeonRoomPropsByRoom()
   };
 }
@@ -328,7 +171,7 @@ export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, can
       const message = ITEM_DIALOGUE_BY_REWARD_KIND[prop.rewardKind];
 
       if (message) {
-        startDialogue(session, createDialoguePages(ctx, canvas, message));
+        startTextDialogue(session, ctx, canvas, message);
       }
 
       return { interacted: true, destination: null };
@@ -420,116 +263,6 @@ function renderSwitch(ctx, prop, drawX, drawY) {
   ctx.fillRect(drawX, drawY, prop.width, prop.height);
 }
 
-function createBush(overrides = {}) {
-  return {
-    kind: "bush",
-    x: 0,
-    y: 0,
-    width: 8,
-    height: 8,
-    blocksMovement: true,
-    cuttable: true,
-    destroyed: false,
-    hidden: false,
-    ...overrides
-  };
-}
-
-function createDungeonEntrance(overrides = {}) {
-  return {
-    kind: "dungeon-entrance",
-    x: 0,
-    y: 0,
-    width: 28,
-    height: 20,
-    blocksMovement: false,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    ...overrides
-  };
-}
-
-function createDungeonExit(overrides = {}) {
-  return {
-    kind: "dungeon-exit",
-    x: 0,
-    y: 0,
-    width: 28,
-    height: 16,
-    blocksMovement: false,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    ...overrides
-  };
-}
-
-function createWallBlock(overrides = {}) {
-  return {
-    kind: "wall-block",
-    x: 0,
-    y: 0,
-    width: WALL_THICKNESS,
-    height: 8,
-    blocksMovement: true,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    ...overrides
-  };
-}
-
-function createChest(overrides = {}) {
-  return {
-    kind: "chest",
-    x: 0,
-    y: 0,
-    width: 12,
-    height: 8,
-    blocksMovement: true,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    opened: false,
-    rewardKind: null,
-    progressFlag: null,
-    ...overrides
-  };
-}
-
-function createTarget(overrides = {}) {
-  return {
-    kind: "target",
-    x: 0,
-    y: 0,
-    width: 8,
-    height: 8,
-    blocksMovement: false,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    progressFlag: null,
-    ...overrides
-  };
-}
-
-function createSwitch(overrides = {}) {
-  return {
-    kind: "switch",
-    x: 0,
-    y: 0,
-    width: 8,
-    height: 8,
-    blocksMovement: false,
-    cuttable: false,
-    destroyed: false,
-    hidden: false,
-    activated: false,
-    progressFlag: null,
-    ...overrides
-  };
-}
 
 function getEntityHitbox(entity) {
   return {

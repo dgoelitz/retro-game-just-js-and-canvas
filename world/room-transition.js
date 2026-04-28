@@ -1,5 +1,6 @@
 import { rectanglesOverlap } from "../game-utils.js";
-import { DOOR_WIDTH, WALL_THICKNESS } from "./room-data.js";
+import { WALL_THICKNESS } from "./room-data.js";
+import { isPlayerAlignedWithDoor } from "./door-geometry.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;
 
@@ -254,59 +255,6 @@ function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
       player.y -= step;
     }
   }
-}
-
-function isPlayerAlignedWithDoor(player, door, canvas) {
-  const doorBounds = getDoorBounds(door.edge, canvas, door);
-
-  if (door.edge === "left" || door.edge === "right") {
-    const playerCenterY = player.y + player.height / 2;
-
-    return playerCenterY >= doorBounds.y && playerCenterY <= doorBounds.y + doorBounds.height;
-  }
-
-  const playerCenterX = player.x + player.width / 2;
-
-  return playerCenterX >= doorBounds.x && playerCenterX <= doorBounds.x + doorBounds.width;
-}
-
-function getDoorBounds(edge, canvas, door = null) {
-  const horizontalDoorStart = door?.offset ?? Math.floor((canvas.width - DOOR_WIDTH) / 2);
-  const verticalDoorStart = door?.offset ?? Math.floor((canvas.height - DOOR_WIDTH) / 2);
-
-  if (edge === "top") {
-    return {
-      x: horizontalDoorStart,
-      y: 0,
-      width: DOOR_WIDTH,
-      height: 4
-    };
-  }
-
-  if (edge === "bottom") {
-    return {
-      x: horizontalDoorStart,
-      y: canvas.height - 4,
-      width: DOOR_WIDTH,
-      height: 4
-    };
-  }
-
-  if (edge === "left") {
-    return {
-      x: 0,
-      y: verticalDoorStart,
-      width: 4,
-      height: DOOR_WIDTH
-    };
-  }
-
-  return {
-    x: canvas.width - 4,
-    y: verticalDoorStart,
-    width: 4,
-    height: DOOR_WIDTH
-  };
 }
 
 function getEntityHitbox(entity) {
