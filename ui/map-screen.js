@@ -50,7 +50,7 @@ export function renderMapScreen(ctx, canvas, world, inventory, progress) {
       ctx.fillRect(roomX + 2, roomY + 2, ROOM_SIZE - 4, ROOM_SIZE - 4);
     }
 
-    if (inventory.hasCompass && hasUnclaimedTreasure(progress, room.roomNumber)) {
+    if (inventory.hasCompass && hasUnclaimedTreasure(progress, room)) {
       ctx.fillStyle = TREASURE_MARKER_COLOR;
       ctx.fillRect(roomX + ROOM_SIZE - 3, roomY - 2, 2, 4);
       ctx.fillRect(roomX + ROOM_SIZE - 4, roomY - 2, 4, 2);
@@ -140,17 +140,6 @@ function getCenteredMapOrigin(mapAreaBounds, mapPixelSize) {
   };
 }
 
-function hasUnclaimedTreasure(progress, roomNumber) {
-  const treasureFlagByRoomNumber = {
-    3: "mapChestOpened",
-    5: "bossKeyChestOpened",
-    7: "keyChestOpened",
-    8: "compassChestOpened",
-    10: "shieldChestOpened",
-    11: "heartPieceChestOpened",
-    13: "finalTreasureChestOpened"
-  };
-  const treasureFlag = treasureFlagByRoomNumber[roomNumber];
-
-  return Boolean(treasureFlag) && !progress.flags[treasureFlag];
+function hasUnclaimedTreasure(progress, room) {
+  return Boolean(room.treasureFlag) && !progress.flags[room.treasureFlag];
 }

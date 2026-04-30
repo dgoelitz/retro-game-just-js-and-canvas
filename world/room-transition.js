@@ -1,5 +1,5 @@
 import { rectanglesOverlap } from "../game-utils.js";
-import { WALL_THICKNESS } from "./room-data.js";
+import { WALL_THICKNESS } from "./room-constants.js";
 import { isPlayerAlignedWithDoor } from "./door-geometry.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;

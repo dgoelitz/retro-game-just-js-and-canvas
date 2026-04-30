@@ -1,3 +1,4 @@
+import { DUNGEON_0_ROOM_COUNT } from "./dungeons/dungeon-0/dungeon-0.js";
 import { createEnemiesByWorldKey } from "./enemies/enemy-manager.js";
 import { applyDebugStart as applyGameDebugStart } from "./game-state-debug.js";
 import { createNpcsByWorldKey } from "./npcs/npc-manager.js";
@@ -185,7 +186,7 @@ function createInventory() {
 function createProgress() {
   return {
     dungeon: {
-      visitedRooms: Array(13).fill(false),
+      visitedRooms: Array(DUNGEON_0_ROOM_COUNT).fill(false),
       flags: {}
     }
   };

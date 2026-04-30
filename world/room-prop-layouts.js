@@ -1,11 +1,8 @@
-import { WALL_THICKNESS } from "./room-data.js";
+import { createDungeon0RoomPropsByRoom } from "../dungeons/dungeon-0/dungeon-0.js";
+import { WALL_THICKNESS } from "./room-constants.js";
 import {
   createBush,
-  createChest,
   createDungeonEntrance,
-  createDungeonExit,
-  createSwitch,
-  createTarget,
   createWallBlock
 } from "./room-prop-factories.js";
 
@@ -51,117 +48,5 @@ export function createOverworldRoomPropsByRoom() {
 }
 
 export function createDungeonRoomPropsByRoom() {
-  return {
-    0: [
-      createDungeonExit({
-        x: 66,
-        y: 72,
-        destination: {
-          worldKey: "overworld",
-          roomIndex: 6,
-          playerX: 76,
-          playerY: 24
-        }
-      })
-    ],
-    1: [
-      createTarget({
-        id: "room-2-target",
-        x: 120,
-        y: 0,
-        progressFlag: "room2TargetDestroyed"
-      })
-    ],
-    2: [
-      createChest({
-        id: "room-3-map",
-        x: 72,
-        y: 40,
-        rewardKind: "map",
-        progressFlag: "mapChestOpened",
-        hidden: true
-      })
-    ],
-    4: [
-      createChest({
-        id: "room-5-boss-key",
-        x: 72,
-        y: 40,
-        rewardKind: "boss-key",
-        progressFlag: "bossKeyChestOpened",
-        hidden: true
-      })
-    ],
-    5: [
-      createTarget({
-        id: "room-6-left-target",
-        x: 0,
-        y: 4,
-        progressFlag: "room6LeftTargetDestroyed"
-      }),
-      createTarget({
-        id: "room-6-right-target",
-        x: 152,
-        y: 4,
-        progressFlag: "room6RightTargetDestroyed"
-      })
-    ],
-    6: [
-      createChest({
-        id: "room-7-key",
-        x: 72,
-        y: 10,
-        rewardKind: "normal-key",
-        progressFlag: "keyChestOpened"
-      })
-    ],
-    7: [
-      createChest({
-        id: "room-8-compass",
-        x: 72,
-        y: 40,
-        rewardKind: "compass",
-        progressFlag: "compassChestOpened",
-        hidden: true
-      })
-    ],
-    9: [
-      createChest({
-        id: "room-10-shield",
-        x: 72,
-        y: 40,
-        rewardKind: "shield",
-        progressFlag: "shieldChestOpened",
-        hidden: true
-      })
-    ],
-    10: [
-      createChest({
-        id: "room-11-heart-piece",
-        x: 72,
-        y: 40,
-        rewardKind: "piece-of-heart",
-        progressFlag: "heartPieceChestOpened",
-        hidden: true
-      })
-    ],
-    11: [
-      createSwitch({
-        id: "room-12-switch",
-        x: 128,
-        y: 40,
-        progressFlag: "room12SwitchPressed"
-      })
-    ],
-    12: [
-      createChest({
-        id: "room-13-final-treasure",
-        x: 72,
-        y: 40,
-        rewardKind: "final-treasure",
-        progressFlag: "finalTreasureChestOpened",
-        hidden: true
-      })
-    ]
-  };
+  return createDungeon0RoomPropsByRoom();
 }

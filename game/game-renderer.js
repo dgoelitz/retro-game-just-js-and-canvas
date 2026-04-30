@@ -1,5 +1,5 @@
 import { renderProjectiles } from "../combat/projectiles.js";
-import { renderEnemy } from "../enemies/enemy.js";
+import { canUseRoomEntryGrace, renderEnemy } from "../enemies/enemy.js";
 import {
   GAME_STATE_DIALOGUE,
   GAME_STATE_GAME_OVER,
@@ -55,8 +55,8 @@ export function renderGame(ctx, canvas, session) {
 
 function renderRoomEnemies(ctx, roomEnemies, offset, isActiveRoom, roomEntryGraceTimer) {
   for (const enemy of roomEnemies) {
-    enemy.transparent = isEnemyTransparentOnRoomEntry(enemy, isActiveRoom, roomEntryGraceTimer);
-    renderEnemy(ctx, enemy, offset);
+    const transparent = isEnemyTransparentOnRoomEntry(enemy, isActiveRoom, roomEntryGraceTimer);
+    renderEnemy(ctx, enemy, offset, { transparent });
   }
 }
 
@@ -85,8 +85,4 @@ function renderOverlay(ctx, canvas, session) {
 
 function isEnemyTransparentOnRoomEntry(enemy, isActiveRoom, roomEntryGraceTimer) {
   return canUseRoomEntryGrace(enemy) && isActiveRoom && roomEntryGraceTimer > 0;
-}
-
-function canUseRoomEntryGrace(enemy) {
-  return enemy.type !== "boss" && enemy.type !== "miniboss";
 }

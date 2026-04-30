@@ -5,7 +5,7 @@ import {
   isTransitioning,
   tryStartRoomTransition
 } from "./room-transition.js";
-import { WALL_THICKNESS } from "./room-data.js";
+import { WALL_THICKNESS } from "./room-constants.js";
 import { renderWorld } from "./world-rendering.js";
 
 export function createWorld(rooms) {

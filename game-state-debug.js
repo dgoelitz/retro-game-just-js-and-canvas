@@ -1,3 +1,4 @@
+import { DUNGEON_0_ROOM_COUNT } from "./dungeons/dungeon-0/dungeon-0.js";
 import { setPlayerPosition } from "./player/player.js";
 
 const DUNGEON_PROGRESS_FLAGS = {
@@ -152,7 +153,7 @@ function applyBossDebugStart(session, helpers) {
     heartPieceCount: 1
   });
 
-  session.progress.dungeon.visitedRooms = Array(13).fill(false).map((_, index) => index <= 11);
+  session.progress.dungeon.visitedRooms = Array(DUNGEON_0_ROOM_COUNT).fill(false).map((_, index) => index <= 11);
   Object.assign(session.progress.dungeon.flags, {
     ...DUNGEON_PROGRESS_FLAGS,
     minibossIntroSeen: true,

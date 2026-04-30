@@ -1,4 +1,4 @@
-import { WALL_THICKNESS } from "./room-data.js";
+import { WALL_THICKNESS } from "./room-constants.js";
 
 export function createBush(overrides = {}) {
   return {

@@ -1,7 +1,7 @@
 import { startTextDialogue } from "../dialogue/dialogue-helpers.js";
 import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../dialogue/dialogue-text.js";
 import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
-import { WALL_COLOR } from "./room-data.js";
+import { WALL_COLOR } from "./room-constants.js";
 import { createDungeonRoomPropsByRoom, createOverworldRoomPropsByRoom } from "./room-prop-layouts.js";
 
 const BUSH_COLOR = "#00a84f";
@@ -14,6 +14,41 @@ const TARGET_COLOR = "#94b0c2";
 const TARGET_CENTER_COLOR = "#e43b44";
 const SWITCH_COLOR = "#c2c3c7";
 const SWITCH_ACTIVE_COLOR = "#00e756";
+const INTERACTION_DISTANCE = 6;
+
+const ROOM_PROP_RENDERERS = {
+  bush: renderBush,
+  "dungeon-entrance": renderDungeonOpening,
+  "dungeon-exit": renderDungeonOpening,
+  "wall-block": renderWallBlock,
+  chest: renderChest,
+  target: renderTarget,
+  switch: renderSwitch
+};
+
+const CHEST_REWARD_APPLIERS = {
+  "normal-key": (session) => {
+    session.inventory.normalKeys += 1;
+  },
+  "boss-key": (session) => {
+    session.inventory.hasBossKey = true;
+  },
+  shield: (session) => {
+    session.inventory.hasShield = true;
+  },
+  map: (session) => {
+    session.inventory.hasMap = true;
+  },
+  compass: (session) => {
+    session.inventory.hasCompass = true;
+  },
+  "piece-of-heart": (session) => {
+    session.inventory.heartPieceCount += 1;
+  },
+  "final-treasure": (session) => {
+    session.inventory.hasFinalTreasure = true;
+  }
+};
 
 export function createRoomPropsByWorldKey() {
   return {
@@ -29,43 +64,10 @@ export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
 
   const drawX = Math.round(prop.x) + offset.x;
   const drawY = Math.round(prop.y) + offset.y;
+  const renderProp = ROOM_PROP_RENDERERS[prop.kind];
 
-  if (prop.kind === "bush") {
-    ctx.fillStyle = BUSH_COLOR;
-    ctx.fillRect(drawX, drawY, prop.width, prop.height);
-
-    ctx.fillStyle = BUSH_HIGHLIGHT_COLOR;
-    ctx.fillRect(drawX + 1, drawY + 1, prop.width - 2, prop.height - 4);
-    return;
-  }
-
-  if (prop.kind === "dungeon-entrance" || prop.kind === "dungeon-exit") {
-    ctx.fillStyle = DUNGEON_COLOR;
-    ctx.fillRect(drawX, drawY, prop.width, prop.height);
-
-    ctx.fillStyle = DUNGEON_OPENING_COLOR;
-    ctx.fillRect(drawX + 4, drawY + 4, prop.width - 8, prop.height - 4);
-    return;
-  }
-
-  if (prop.kind === "wall-block") {
-    ctx.fillStyle = WALL_COLOR;
-    ctx.fillRect(drawX, drawY, prop.width, prop.height);
-    return;
-  }
-
-  if (prop.kind === "chest") {
-    renderChest(ctx, prop, drawX, drawY);
-    return;
-  }
-
-  if (prop.kind === "target") {
-    renderTarget(ctx, prop, drawX, drawY);
-    return;
-  }
-
-  if (prop.kind === "switch") {
-    renderSwitch(ctx, prop, drawX, drawY);
+  if (renderProp) {
+    renderProp(ctx, prop, drawX, drawY);
   }
 }
 
@@ -105,7 +107,7 @@ export function hitRoomProps(roomProps, attackHitbox) {
   }
 
   for (const prop of roomProps) {
-    if (!isCuttable(prop) || prop.destroyed || prop.hidden) {
+    if (!prop.cuttable || prop.destroyed || prop.hidden) {
       continue;
     }
 
@@ -155,11 +157,7 @@ export function interactWithRoomProps(session, roomProps, playerHitbox, ctx, can
       continue;
     }
 
-    const canInteract = prop.destination
-      ? rectanglesOverlap(prop, playerHitbox)
-      : isWithinInteractionRange(prop, playerHitbox);
-
-    if (!canInteract) {
+    if (!canInteractWithProp(prop, playerHitbox)) {
       continue;
     }
 
@@ -203,39 +201,28 @@ function isPressedByWeight(prop, playerHitbox) {
 }
 
 function applyChestReward(session, rewardKind) {
-  if (rewardKind === "normal-key") {
-    session.inventory.normalKeys += 1;
-    return;
-  }
+  CHEST_REWARD_APPLIERS[rewardKind]?.(session);
+}
 
-  if (rewardKind === "boss-key") {
-    session.inventory.hasBossKey = true;
-    return;
-  }
+function renderBush(ctx, prop, drawX, drawY) {
+  ctx.fillStyle = BUSH_COLOR;
+  ctx.fillRect(drawX, drawY, prop.width, prop.height);
 
-  if (rewardKind === "shield") {
-    session.inventory.hasShield = true;
-    return;
-  }
+  ctx.fillStyle = BUSH_HIGHLIGHT_COLOR;
+  ctx.fillRect(drawX + 1, drawY + 1, prop.width - 2, prop.height - 4);
+}
 
-  if (rewardKind === "map") {
-    session.inventory.hasMap = true;
-    return;
-  }
+function renderDungeonOpening(ctx, prop, drawX, drawY) {
+  ctx.fillStyle = DUNGEON_COLOR;
+  ctx.fillRect(drawX, drawY, prop.width, prop.height);
 
-  if (rewardKind === "compass") {
-    session.inventory.hasCompass = true;
-    return;
-  }
+  ctx.fillStyle = DUNGEON_OPENING_COLOR;
+  ctx.fillRect(drawX + 4, drawY + 4, prop.width - 8, prop.height - 4);
+}
 
-  if (rewardKind === "piece-of-heart") {
-    session.inventory.heartPieceCount += 1;
-    return;
-  }
-
-  if (rewardKind === "final-treasure") {
-    session.inventory.hasFinalTreasure = true;
-  }
+function renderWallBlock(ctx, prop, drawX, drawY) {
+  ctx.fillStyle = WALL_COLOR;
+  ctx.fillRect(drawX, drawY, prop.width, prop.height);
 }
 
 function renderChest(ctx, prop, drawX, drawY) {
@@ -263,7 +250,6 @@ function renderSwitch(ctx, prop, drawX, drawY) {
   ctx.fillRect(drawX, drawY, prop.width, prop.height);
 }
 
-
 function getEntityHitbox(entity) {
   return {
     x: Math.round(entity.x),
@@ -274,30 +260,27 @@ function getEntityHitbox(entity) {
 }
 
 function overlapsBlockingProp(roomProps, hitbox) {
-  for (const prop of roomProps) {
-    if (!prop.blocksMovement || prop.destroyed || prop.hidden) {
-      continue;
-    }
-
-    if (rectanglesOverlap(prop, hitbox)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function isCuttable(prop) {
-  return prop.cuttable;
+  return roomProps.some((prop) => (
+    prop.blocksMovement
+    && !prop.destroyed
+    && !prop.hidden
+    && rectanglesOverlap(prop, hitbox)
+  ));
 }
 
 function isWithinInteractionRange(prop, playerHitbox) {
-  const interactionDistance = 6;
-
   return rectanglesOverlap({
-    x: prop.x - interactionDistance,
-    y: prop.y - interactionDistance,
-    width: prop.width + interactionDistance * 2,
-    height: prop.height + interactionDistance * 2
+    x: prop.x - INTERACTION_DISTANCE,
+    y: prop.y - INTERACTION_DISTANCE,
+    width: prop.width + INTERACTION_DISTANCE * 2,
+    height: prop.height + INTERACTION_DISTANCE * 2
   }, playerHitbox);
+}
+
+function canInteractWithProp(prop, playerHitbox) {
+  if (prop.destination) {
+    return rectanglesOverlap(prop, playerHitbox);
+  }
+
+  return isWithinInteractionRange(prop, playerHitbox);
 }

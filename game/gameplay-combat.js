@@ -5,6 +5,7 @@ import {
 } from "../combat/projectiles.js";
 import {
   blockEnemyWithShield,
+  canUseRoomEntryGrace,
   hitEnemy,
   resolveProjectileHitsOnEnemies,
   touchesEnemy,
@@ -53,8 +54,4 @@ function resolvePlayerDamage(session, previousPlayerPosition, roomEnemies, roomP
   if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldHitbox, shieldSweep)) {
     damagePlayer(session.player);
   }
-}
-
-function canUseRoomEntryGrace(enemy) {
-  return enemy.type !== "boss" && enemy.type !== "miniboss";
 }

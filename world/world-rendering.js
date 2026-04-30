@@ -1,6 +1,6 @@
 import { ZERO_OFFSET } from "../game-utils.js";
 import { getRoomTransitionOffsets } from "./room-transition.js";
-import { ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./room-data.js";
+import { ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./room-constants.js";
 import { getDoorBounds, getRoomBounds } from "./door-geometry.js";
 
 const DOOR_OPENING_COLOR = "#1a1c2c";

@@ -1,4 +1,4 @@
-import { DOOR_WIDTH, WALL_THICKNESS } from "./room-data.js";
+import { DOOR_WIDTH, WALL_THICKNESS } from "./room-constants.js";
 
 export function getRoomBounds(canvas, offset) {
   return {
