@@ -5,11 +5,11 @@ export const BLOCKED_DOOR_DIALOGUE_BY_KIND = {
 };
 
 export const GAME_DIALOGUE_TEXT = {
-  openingHint: "Red squares are enemies. You can't attack yet. Find someone in town who can help you."
+  openingHint: "Man, that red square looks scary. You don't have any kind of a weaon, so you better go somewhere else. I suppose you could get around it if you used the Arrow Keys or WASD. If you were wanting to talk to someone or do something, ya know, then I'd probably press Enter if it were me."
 };
 
 export const NPC_DIALOGUE_TEXT = {
-  townGuideFirstMeeting: "Welcome to the town. You've been out in the wilderness? That's not safe without a sword! Here I have a cheap one you can have.",
+  townGuideFirstMeeting: "Welcome to the town. You've been out in the wilderness? That's not safe without a sword! Here I have a cheap one you can have. This old clunker seems to work pretty well when you press the Spacebar.",
   townGuideRepeat: "Treat that sword well and it will treat you well."
 };
 
@@ -24,8 +24,8 @@ export const ITEM_DIALOGUE_BY_REWARD_KIND = {
   "normal-key": "You found - like - a normalish looking kinda basic sorta key.",
   "boss-key": "Wow this key looks important. I wonder if this key is different from other keys.",
   shield: "You got the shield! Hold the Shift key to block with it. Ok then, defend away!",
-  map: "You got the dungeon map. My, how unexpected. Never thought there would be a map for a dungeon. Now I've seen everything. Press the Tab key to open the map.",
+  map: "You got the dungeon map. I never would have dreamed that there would be a map for a dungeon. Now I've seen everything. Press the Tab key to open the map.",
   compass: "You got a magnet that somehow will show on your map where stuff is. Don't ask me. Press the Tab key to open the map.",
-  "piece-of-heart": "You got part of a new health container. Probably you know how this works so I won't bore you with the details.",
+  "piece-of-heart": "You got part of a new health container. It's just a part of one, so it's not going to work just like that on its own.",
   "final-treasure": "Congrats! You completed the game up to the end of this version."
 };

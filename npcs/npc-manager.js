@@ -1,21 +1,13 @@
 import { NPC_DIALOGUE_TEXT } from "../dialogue/dialogue-text.js";
-import { createNpc } from "./npc.js";
+import { createOverworld0NpcsByRoom } from "../overworld/overworld-0/overworld-0.js";
 
-export function createNpcsByRoom() {
-  return {
-    4: [
-      createNpc({
-        id: "town-guide",
-        x: 72,
-        y: 44
-      })
-    ]
-  };
+export function createOverworldNpcsByRoom() {
+  return createOverworld0NpcsByRoom();
 }
 
 export function createNpcsByWorldKey() {
   return {
-    overworld: createNpcsByRoom(),
+    overworld: createOverworldNpcsByRoom(),
     dungeon: {}
   };
 }

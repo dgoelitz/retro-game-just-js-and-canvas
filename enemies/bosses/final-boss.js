@@ -33,9 +33,13 @@ export function createBossEnemy() {
     slamWall: "top",
     directionX: 1,
     directionY: 1,
+    abilityTimer: 0,
+    bounceCount: 0,
     speed: 34,
     shotCooldown: 2.4,
-    shootTimer: 1.2
+    shootTimer: 1.2,
+    spawnCooldown: 3,
+    impactPauseDuration: 0.22
   });
 }
 

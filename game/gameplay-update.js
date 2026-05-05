@@ -39,7 +39,7 @@ export function updatePlayingState(session, input, ctx, canvas, deltaTime, world
     session.inventory.hasShield
   );
 
-  resolvePlayerCollisions(session, previousPlayerPosition, roomState.roomNpcs, roomState.roomProps, worldState.activeWorld);
+  resolvePlayerCollisions(session, previousPlayerPosition, roomState, worldState.activeWorld);
 
   if (handleBlockedDoorAtRoomEdge(session, roomState.roomEnemies, worldState.activeWorld, ctx, canvas)) {
     return;

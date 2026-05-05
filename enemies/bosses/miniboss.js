@@ -34,7 +34,10 @@ export function createMinibossEnemy() {
     maxHealth: 8,
     mode: MINIBOSS_MODE_THROW,
     shotCooldown: 0.9,
-    shootTimer: 1.6
+    shootTimer: 1.6,
+    abilityTimer: 0,
+    stunHitCount: 0,
+    maxHitsPerStun: 3
   });
 }
 
