@@ -9,7 +9,7 @@ Current features:
 - player health, damage flash, and a three-square HUD
 - enemy patrol, chase, return-home behavior, damage flash, and two-hit health
 - five connected rooms with sliding screen transitions
-- an NPC conversation that unlocks the sword and can be paged with Space or Enter
+- an NPC conversation that unlocks the sword and can be paged with Enter
 - game-over screen with Space to restart the run
 - separate modules for input, game state, player, sword, enemies, world, and UI
 

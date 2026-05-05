@@ -94,7 +94,7 @@ function updateGameOverState(session, input) {
 function updateDialogueState(session, input, deltaTime) {
   updateDialogue(session.dialogue, deltaTime);
 
-  if (input.attack || input.interact) {
+  if (input.interact) {
     advanceDialogue(session, input);
   }
 }
