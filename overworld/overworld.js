@@ -1,7 +1,7 @@
-import { OVERWORLD_0_ROOM_BUILDERS } from "./rooms/index.js";
+import { OVERWORLD_ROOM_BUILDERS } from "./rooms/index.js";
 
-export function createOverworld0Rooms() {
-  return OVERWORLD_0_ROOM_BUILDERS.map((buildRoomDefinition) => {
+export function createOverworldRooms() {
+  return OVERWORLD_ROOM_BUILDERS.map((buildRoomDefinition) => {
     const roomDefinition = buildRoomDefinition();
 
     return {
@@ -11,22 +11,22 @@ export function createOverworld0Rooms() {
   });
 }
 
-export function createOverworld0EnemiesByRoom() {
+export function createOverworldEnemiesByRoom() {
   return createRoomContentMap("createEnemies");
 }
 
-export function createOverworld0RoomPropsByRoom() {
+export function createOverworldRoomPropsByRoom() {
   return createRoomContentMap("createProps");
 }
 
-export function createOverworld0NpcsByRoom() {
+export function createOverworldNpcsByRoom() {
   return createRoomContentMap("createNpcs");
 }
 
 function createRoomContentMap(factoryName) {
   const contentByRoom = {};
 
-  OVERWORLD_0_ROOM_BUILDERS.forEach((buildRoomDefinition, roomIndex) => {
+  OVERWORLD_ROOM_BUILDERS.forEach((buildRoomDefinition, roomIndex) => {
     const roomDefinition = buildRoomDefinition();
     const createContent = roomDefinition[factoryName];
 

@@ -6,7 +6,7 @@ import { createRoom04 } from "./room-04.js";
 import { createRoom05 } from "./room-05.js";
 import { createRoom06 } from "./room-06.js";
 
-export const OVERWORLD_0_ROOM_BUILDERS = [
+export const OVERWORLD_ROOM_BUILDERS = [
   createRoom00,
   createRoom01,
   createRoom02,

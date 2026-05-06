@@ -1,4 +1,4 @@
-export function createOverworld0RoomDefinition({
+export function createOverworldRoomDefinition({
   walls,
   neighbors,
   createEnemies = null,

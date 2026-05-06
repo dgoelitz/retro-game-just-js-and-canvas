@@ -1,8 +1,8 @@
 import { createDungeon0RoomPropsByRoom } from "../dungeons/dungeon-0/dungeon-0.js";
-import { createOverworld0RoomPropsByRoom } from "../overworld/overworld-0/overworld-0.js";
+import { createOverworldRoomPropsByRoom as createOverworldPropMap } from "../overworld/overworld.js";
 
 export function createOverworldRoomPropsByRoom() {
-  return createOverworld0RoomPropsByRoom();
+  return createOverworldPropMap();
 }
 
 export function createDungeonRoomPropsByRoom() {

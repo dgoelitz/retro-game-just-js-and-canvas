@@ -1,8 +1,8 @@
-import { createBush, createDungeonEntrance } from "../../../world/room-prop-factories.js";
-import { createOverworld0RoomDefinition } from "../room-helpers.js";
+import { createBush, createDungeonEntrance } from "../../world/room-prop-factories.js";
+import { createOverworldRoomDefinition } from "../room-helpers.js";
 
 export function createRoom06() {
-  return createOverworld0RoomDefinition({
+  return createOverworldRoomDefinition({
     walls: {
       top: true,
       right: true,

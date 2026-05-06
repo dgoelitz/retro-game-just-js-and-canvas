@@ -1,8 +1,8 @@
 import { createDungeon0EnemiesByRoom } from "../dungeons/dungeon-0/dungeon-0.js";
-import { createOverworld0EnemiesByRoom } from "../overworld/overworld-0/overworld-0.js";
+import { createOverworldEnemiesByRoom as createOverworldEnemyMap } from "../overworld/overworld.js";
 
 export function createOverworldEnemiesByRoom() {
-  return createOverworld0EnemiesByRoom();
+  return createOverworldEnemyMap();
 }
 
 export function createDungeonEnemiesByRoom() {
