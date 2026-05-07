@@ -1,6 +1,12 @@
 import { startTextDialogue } from "../dialogue/dialogue-helpers.js";
 import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../dialogue/dialogue-text.js";
-import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
+import {
+  createWorldKeyMap,
+  expandRect,
+  rectanglesOverlap,
+  resolveAxisSeparatedCollision,
+  ZERO_OFFSET
+} from "../game-utils.js";
 import { WALL_COLOR } from "./room-constants.js";
 import { createDungeonRoomPropsByRoom, createOverworldRoomPropsByRoom } from "./room-prop-layouts.js";
 
@@ -51,10 +57,10 @@ const CHEST_REWARD_APPLIERS = {
 };
 
 export function createRoomPropsByWorldKey() {
-  return {
-    overworld: createOverworldRoomPropsByRoom(),
-    dungeon: createDungeonRoomPropsByRoom()
-  };
+  return createWorldKeyMap(
+    createOverworldRoomPropsByRoom(),
+    createDungeonRoomPropsByRoom()
+  );
 }
 
 export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
@@ -72,33 +78,7 @@ export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
 }
 
 export function resolveRoomPropCollisions(player, previousPosition, roomProps) {
-  const movedHitbox = getEntityHitbox(player);
-
-  if (!overlapsBlockingProp(roomProps, movedHitbox)) {
-    return;
-  }
-
-  const movedPosition = {
-    x: player.x,
-    y: player.y
-  };
-
-  player.x = previousPosition.x;
-  player.y = movedPosition.y;
-
-  if (!overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-    return;
-  }
-
-  player.x = movedPosition.x;
-  player.y = previousPosition.y;
-
-  if (!overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-    return;
-  }
-
-  player.x = previousPosition.x;
-  player.y = previousPosition.y;
+  resolveAxisSeparatedCollision(player, previousPosition, (hitbox) => overlapsBlockingProp(roomProps, hitbox));
 }
 
 export function hitRoomProps(roomProps, attackHitbox) {
@@ -250,15 +230,6 @@ function renderSwitch(ctx, prop, drawX, drawY) {
   ctx.fillRect(drawX, drawY, prop.width, prop.height);
 }
 
-function getEntityHitbox(entity) {
-  return {
-    x: Math.round(entity.x),
-    y: Math.round(entity.y),
-    width: entity.width,
-    height: entity.height
-  };
-}
-
 function overlapsBlockingProp(roomProps, hitbox) {
   return roomProps.some((prop) => (
     prop.blocksMovement
@@ -269,12 +240,7 @@ function overlapsBlockingProp(roomProps, hitbox) {
 }
 
 function isWithinInteractionRange(prop, playerHitbox) {
-  return rectanglesOverlap({
-    x: prop.x - INTERACTION_DISTANCE,
-    y: prop.y - INTERACTION_DISTANCE,
-    width: prop.width + INTERACTION_DISTANCE * 2,
-    height: prop.height + INTERACTION_DISTANCE * 2
-  }, playerHitbox);
+  return rectanglesOverlap(expandRect(prop, INTERACTION_DISTANCE), playerHitbox);
 }
 
 function canInteractWithProp(prop, playerHitbox) {

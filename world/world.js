@@ -1,4 +1,9 @@
-import { rectanglesOverlap } from "../game-utils.js";
+import {
+  getRoundedHitbox,
+  rectanglesOverlap,
+  rectanglesOverlapAny,
+  resolveAxisSeparatedCollision
+} from "../game-utils.js";
 import { isPlayerAlignedWithDoor } from "./door-geometry.js";
 import {
   handleWorldTransition,
@@ -7,6 +12,8 @@ import {
 } from "./room-transition.js";
 import { WALL_THICKNESS } from "./room-constants.js";
 import { renderWorld } from "./world-rendering.js";
+
+const DOOR_EDGES = ["left", "right", "top", "bottom"];
 
 export function createWorld(rooms) {
   return {
@@ -62,42 +69,21 @@ export function getBlockedDoorKindAtRoomEdge(player, world, canvas, inventory = 
     return null;
   }
 
-  return (
-    getBlockedDoorKindForEdge(player, room, canvas, inventory, "left") ??
-    getBlockedDoorKindForEdge(player, room, canvas, inventory, "right") ??
-    getBlockedDoorKindForEdge(player, room, canvas, inventory, "top") ??
-    getBlockedDoorKindForEdge(player, room, canvas, inventory, "bottom")
-  );
+  for (const edge of DOOR_EDGES) {
+    const blockedDoorKind = getBlockedDoorKindForEdge(player, room, canvas, inventory, edge);
+
+    if (blockedDoorKind) {
+      return blockedDoorKind;
+    }
+  }
+
+  return null;
 }
 
 function resolveSolidWallCollisions(player, previousPosition, collisionRects) {
-  const movedHitbox = getEntityHitbox(player);
-
-  if (!overlapsAnyRect(collisionRects, movedHitbox)) {
-    return;
-  }
-
-  const movedPosition = {
-    x: player.x,
-    y: player.y
-  };
-
-  player.x = previousPosition.x;
-  player.y = movedPosition.y;
-
-  if (!overlapsAnyRect(collisionRects, getEntityHitbox(player))) {
-    return;
-  }
-
-  player.x = movedPosition.x;
-  player.y = previousPosition.y;
-
-  if (!overlapsAnyRect(collisionRects, getEntityHitbox(player))) {
-    return;
-  }
-
-  player.x = previousPosition.x;
-  player.y = previousPosition.y;
+  resolveAxisSeparatedCollision(player, previousPosition, (hitbox) => (
+    rectanglesOverlapAny(collisionRects, hitbox)
+  ));
 }
 
 function resolveOneWayPlatformCollisions(player, previousPosition, platforms) {
@@ -130,7 +116,7 @@ function resolveOneWayPlatformCollisions(player, previousPosition, platforms) {
       continue;
     }
 
-    const movedHitbox = getEntityHitbox(player);
+    const movedHitbox = getRoundedHitbox(player);
 
     if (!rectanglesOverlap(platform, movedHitbox)) {
       continue;
@@ -156,43 +142,21 @@ function overlapsOnYAxis(player, platform) {
 }
 
 function constrainPlayerToDoorRoom(player, room, canvas, inventory) {
-  constrainAxisToDoorRoom(player, room, canvas, inventory, "left");
-  constrainAxisToDoorRoom(player, room, canvas, inventory, "right");
-  constrainAxisToDoorRoom(player, room, canvas, inventory, "top");
-  constrainAxisToDoorRoom(player, room, canvas, inventory, "bottom");
+  for (const edge of DOOR_EDGES) {
+    constrainPlayerAtDoorEdge(player, room, canvas, inventory, edge);
+  }
 }
 
-function constrainAxisToDoorRoom(player, room, canvas, inventory, edge) {
+function constrainPlayerAtDoorEdge(player, room, canvas, inventory, edge) {
   const door = room.doors?.[edge];
   const isAlignedWithDoor = isPlayerAlignedWithDoor(player, door, canvas);
   const allowsLeavingThroughDoor = door && isPassableDoor(door, inventory) && isAlignedWithDoor;
 
-  if (edge === "left" && player.x < WALL_THICKNESS) {
-    if (!allowsLeavingThroughDoor) {
-      player.x = WALL_THICKNESS;
-    }
+  if (allowsLeavingThroughDoor || !isPlayerPastRoomEdge(player, canvas, edge)) {
     return;
   }
 
-  if (edge === "right" && player.x + player.width > canvas.width - WALL_THICKNESS) {
-    if (!allowsLeavingThroughDoor) {
-      player.x = canvas.width - WALL_THICKNESS - player.width;
-    }
-    return;
-  }
-
-  if (edge === "top" && player.y < WALL_THICKNESS) {
-    if (!allowsLeavingThroughDoor) {
-      player.y = WALL_THICKNESS;
-    }
-    return;
-  }
-
-  if (edge === "bottom" && player.y + player.height > canvas.height - WALL_THICKNESS) {
-    if (!allowsLeavingThroughDoor) {
-      player.y = canvas.height - WALL_THICKNESS - player.height;
-    }
-  }
+  keepPlayerInsideRoomEdge(player, canvas, edge);
 }
 
 function getBlockedDoorKindForEdge(player, room, canvas, inventory, edge) {
@@ -202,23 +166,7 @@ function getBlockedDoorKindForEdge(player, room, canvas, inventory, edge) {
     return null;
   }
 
-  if (edge === "left" && player.x < WALL_THICKNESS) {
-    return door.kind;
-  }
-
-  if (edge === "right" && player.x + player.width > canvas.width - WALL_THICKNESS) {
-    return door.kind;
-  }
-
-  if (edge === "top" && player.y < WALL_THICKNESS) {
-    return door.kind;
-  }
-
-  if (edge === "bottom" && player.y + player.height > canvas.height - WALL_THICKNESS) {
-    return door.kind;
-  }
-
-  return null;
+  return isPlayerPastRoomEdge(player, canvas, edge) ? door.kind : null;
 }
 
 function isPassableDoor(door, inventory) {
@@ -241,15 +189,37 @@ function hasCenteredDoors(room) {
   return Boolean(room.doors);
 }
 
-function getEntityHitbox(entity) {
-  return {
-    x: Math.round(entity.x),
-    y: Math.round(entity.y),
-    width: entity.width,
-    height: entity.height
-  };
+function isPlayerPastRoomEdge(player, canvas, edge) {
+  if (edge === "left") {
+    return player.x < WALL_THICKNESS;
+  }
+
+  if (edge === "right") {
+    return player.x + player.width > canvas.width - WALL_THICKNESS;
+  }
+
+  if (edge === "top") {
+    return player.y < WALL_THICKNESS;
+  }
+
+  return player.y + player.height > canvas.height - WALL_THICKNESS;
 }
 
-function overlapsAnyRect(rects, hitbox) {
-  return rects.some((rect) => rectanglesOverlap(rect, hitbox));
+function keepPlayerInsideRoomEdge(player, canvas, edge) {
+  if (edge === "left") {
+    player.x = WALL_THICKNESS;
+    return;
+  }
+
+  if (edge === "right") {
+    player.x = canvas.width - WALL_THICKNESS - player.width;
+    return;
+  }
+
+  if (edge === "top") {
+    player.y = WALL_THICKNESS;
+    return;
+  }
+
+  player.y = canvas.height - WALL_THICKNESS - player.height;
 }

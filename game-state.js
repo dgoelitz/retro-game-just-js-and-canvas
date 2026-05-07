@@ -1,6 +1,7 @@
 import { DUNGEON_0_ROOM_COUNT } from "./dungeons/dungeon-0/dungeon-0.js";
 import { createEnemiesByWorldKey } from "./enemies/enemy-manager.js";
 import { applyDebugStart as applyGameDebugStart } from "./game-state-debug.js";
+import { createWorldKeyMap } from "./game-utils.js";
 import { createNpcsByWorldKey } from "./npcs/npc-manager.js";
 import { createPlayer, setPlayerPosition } from "./player/player.js";
 import { createShield } from "./player/shield.js";
@@ -13,6 +14,7 @@ export const GAME_STATE_PLAYING = "playing";
 export const GAME_STATE_DIALOGUE = "dialogue";
 export const GAME_STATE_GAME_OVER = "game-over";
 export const GAME_STATE_MAP = "map";
+const DUNGEON_ROOM_ENTRY_GRACE_DURATION = 0.35;
 
 const OVERWORLD_START = {
   worldKey: "overworld",
@@ -37,18 +39,12 @@ export function createGameSession() {
     player: createPlayer(),
     sword: createSword(),
     shield: createShield(),
-    worldsByKey: {
-      overworld: createWorld(createOverworldRooms()),
-      dungeon: createWorld(createDungeonRooms())
-    },
+    worldsByKey: createWorldsByKey(),
     activeWorldKey: OVERWORLD_START.worldKey,
     enemiesByWorldKey: createEnemiesByWorldKey(),
     npcsByWorldKey: createNpcsByWorldKey(),
     roomPropsByWorldKey: createRoomPropsByWorldKey(),
-    projectilesByWorldKey: {
-      overworld: {},
-      dungeon: {}
-    },
+    projectilesByWorldKey: createEmptyProjectilesByWorldKey(),
     inventory: createInventory(),
     progress: createProgress(),
     roomEntryGraceTimer: 0,
@@ -72,45 +68,17 @@ export function applyDebugStart(session, debugStartKey) {
 }
 
 export function resetGameSession(session) {
-  const nextSession = createGameSession();
-
-  session.player = nextSession.player;
-  session.sword = nextSession.sword;
-  session.shield = nextSession.shield;
-  session.worldsByKey = nextSession.worldsByKey;
-  session.activeWorldKey = nextSession.activeWorldKey;
-  session.enemiesByWorldKey = nextSession.enemiesByWorldKey;
-  session.npcsByWorldKey = nextSession.npcsByWorldKey;
-  session.roomPropsByWorldKey = nextSession.roomPropsByWorldKey;
-  session.projectilesByWorldKey = nextSession.projectilesByWorldKey;
-  session.inventory = nextSession.inventory;
-  session.progress = nextSession.progress;
-  session.roomEntryGraceTimer = nextSession.roomEntryGraceTimer;
-  session.blockedDoorMessagesShown = nextSession.blockedDoorMessagesShown;
-  session.dialogue = nextSession.dialogue;
-  session.mode = nextSession.mode;
-  session.gameOverDestination = nextSession.gameOverDestination;
+  Object.assign(session, createGameSession());
 }
 
 export function respawnAfterGameOver(session) {
-  session.player = createPlayer();
-  session.sword = createSword();
-  session.shield = createShield();
-  session.enemiesByWorldKey = createEnemiesByWorldKey();
-  session.projectilesByWorldKey = {
-    overworld: {},
-    dungeon: {}
-  };
+  resetRunState(session);
   session.roomEntryGraceTimer = 0;
   session.blockedDoorMessagesShown = {};
   session.dialogue = null;
   session.mode = GAME_STATE_PLAYING;
 
-  session.activeWorldKey = session.gameOverDestination.worldKey;
-  const activeWorld = getActiveWorld(session);
-  activeWorld.currentRoomIndex = session.gameOverDestination.roomIndex;
-  activeWorld.transition = null;
-  setPlayerPosition(session.player, session.gameOverDestination.playerPosition);
+  movePlayerToDestination(session, session.gameOverDestination);
 
   applyPersistentEnemyProgress(session);
   applyPersistentDoorProgress(session);
@@ -138,17 +106,17 @@ export function getActiveProjectilesByRoom(session) {
 }
 
 export function travelToDestination(session, destination) {
-  session.activeWorldKey = destination.worldKey;
-  const nextWorld = getActiveWorld(session);
-  const nextProjectilesByRoom = getActiveProjectilesByRoom(session);
-
-  nextWorld.currentRoomIndex = destination.roomIndex;
-  nextWorld.transition = null;
-  nextProjectilesByRoom[destination.roomIndex] = [];
-  setPlayerPosition(session.player, {
-    x: destination.playerX,
-    y: destination.playerY
+  movePlayerToDestination(session, {
+    worldKey: destination.worldKey,
+    roomIndex: destination.roomIndex,
+    playerPosition: {
+      x: destination.playerX,
+      y: destination.playerY
+    }
   });
+
+  const nextProjectilesByRoom = getActiveProjectilesByRoom(session);
+  nextProjectilesByRoom[destination.roomIndex] = [];
   session.sword.active = false;
   session.shield.active = false;
 
@@ -162,7 +130,7 @@ export function markCurrentRoomVisited(session) {
 
   const activeWorld = getActiveWorld(session);
   session.progress.dungeon.visitedRooms[activeWorld.currentRoomIndex] = true;
-  session.roomEntryGraceTimer = 0.35;
+  session.roomEntryGraceTimer = DUNGEON_ROOM_ENTRY_GRACE_DURATION;
   session.blockedDoorMessagesShown = {};
 }
 
@@ -198,6 +166,33 @@ export function getDungeonRespawnDestination() {
 
 export function getOverworldRespawnDestination() {
   return OVERWORLD_START;
+}
+
+function createWorldsByKey() {
+  return createWorldKeyMap(
+    createWorld(createOverworldRooms()),
+    createWorld(createDungeonRooms())
+  );
+}
+
+function createEmptyProjectilesByWorldKey() {
+  return createWorldKeyMap({}, {});
+}
+
+function resetRunState(session) {
+  session.player = createPlayer();
+  session.sword = createSword();
+  session.shield = createShield();
+  session.enemiesByWorldKey = createEnemiesByWorldKey();
+  session.projectilesByWorldKey = createEmptyProjectilesByWorldKey();
+}
+
+function movePlayerToDestination(session, destination) {
+  session.activeWorldKey = destination.worldKey;
+  const activeWorld = getActiveWorld(session);
+  activeWorld.currentRoomIndex = destination.roomIndex;
+  activeWorld.transition = null;
+  setPlayerPosition(session.player, destination.playerPosition);
 }
 
 function applyPersistentEnemyProgress(session) {

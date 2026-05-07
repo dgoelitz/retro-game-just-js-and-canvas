@@ -29,6 +29,40 @@ import {
 
 export { createEnemy } from "./enemy-base.js";
 
+const ENEMY_UPDATERS = {
+  patrol: updatePatrolEnemy,
+  turret: updateTurretEnemy,
+  "fixed-turret": updateFixedTurretEnemy,
+  stone(enemy, _player, deltaTime) {
+    updateOrbitEnemy(enemy, deltaTime, 0.9);
+  },
+  snake(enemy, _player, deltaTime) {
+    updateSnakeEnemy(enemy, deltaTime);
+  },
+  miniboss: updateMiniboss,
+  boss(enemy, _player, deltaTime, canvas, _projectiles, roomEnemies) {
+    updateBoss(enemy, deltaTime, canvas, roomEnemies);
+  }
+};
+
+const PROJECTILE_REACTIONS = [
+  destroyFixedTurretFromProjectile,
+  destroyStoneFromProjectile,
+  stunBossFromProjectile
+];
+
+const MELEE_IMMUNE_ENEMY_TYPES = new Set([
+  "turret",
+  "fixed-turret",
+  "stone",
+  "snake"
+]);
+
+const DAMAGE_EFFECTS_BY_TYPE = {
+  miniboss: applyMinibossStunDamageEffects,
+  boss: applyFinalBossDamageEffects
+};
+
 export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomEnemies) {
   tickTimer(enemy, "invulnerableTimer", deltaTime);
   tickTimer(enemy, "hitPauseTimer", deltaTime);
@@ -37,31 +71,8 @@ export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomE
     return;
   }
 
-  switch (enemy.type) {
-    case "patrol":
-      updatePatrolEnemy(enemy, player, deltaTime, canvas);
-      return;
-    case "turret":
-      updateTurretEnemy(enemy, player, deltaTime, projectiles);
-      return;
-    case "fixed-turret":
-      updateFixedTurretEnemy(enemy, deltaTime, projectiles);
-      return;
-    case "stone":
-      updateOrbitEnemy(enemy, deltaTime, 0.9);
-      return;
-    case "snake":
-      updateSnakeEnemy(enemy, deltaTime);
-      return;
-    case "miniboss":
-      updateMiniboss(enemy, player, deltaTime, canvas, projectiles);
-      return;
-    case "boss":
-      updateBoss(enemy, deltaTime, canvas, roomEnemies);
-      return;
-    default:
-      return;
-  }
+  const updateEnemyByType = ENEMY_UPDATERS[enemy.type];
+  updateEnemyByType?.(enemy, player, deltaTime, canvas, projectiles, roomEnemies);
 }
 
 export function hitEnemy(enemy, attackHitbox) {
@@ -83,15 +94,7 @@ export function resolveProjectileHitsOnEnemies(roomEnemies, projectiles) {
         continue;
       }
 
-      if (destroyFixedTurretFromProjectile(enemy, projectile)) {
-        break;
-      }
-
-      if (destroyStoneFromProjectile(enemy, projectile)) {
-        break;
-      }
-
-      if (stunBossFromProjectile(roomEnemies, enemy, projectile)) {
+      if (applyProjectileReaction(roomEnemies, enemy, projectile)) {
         break;
       }
     }
@@ -227,17 +230,14 @@ function canEnemyTakeAttackDamage(enemy, attackHitbox) {
 }
 
 function isMeleeImmuneEnemyType(enemyType) {
-  return enemyType === "turret"
-    || enemyType === "fixed-turret"
-    || enemyType === "stone"
-    || enemyType === "snake";
+  return MELEE_IMMUNE_ENEMY_TYPES.has(enemyType);
 }
 
 function canProjectileHitEnemy(projectile, enemy) {
   return projectile.active && enemy.alive && rectanglesOverlap(enemy, projectile);
 }
 
-function destroyFixedTurretFromProjectile(enemy, projectile) {
+function destroyFixedTurretFromProjectile(_roomEnemies, enemy, projectile) {
   if (enemy.type !== "fixed-turret" || !projectile.deflected) {
     return false;
   }
@@ -247,7 +247,7 @@ function destroyFixedTurretFromProjectile(enemy, projectile) {
   return true;
 }
 
-function destroyStoneFromProjectile(enemy, projectile) {
+function destroyStoneFromProjectile(_roomEnemies, enemy, projectile) {
   if (enemy.type !== "stone") {
     return false;
   }
@@ -260,14 +260,7 @@ function destroyStoneFromProjectile(enemy, projectile) {
 function applyEnemyDamage(enemy, amount) {
   enemy.health -= amount;
   enemy.invulnerableTimer = enemy.invulnerableDuration;
-
-  if (enemy.type === "miniboss") {
-    applyMinibossStunDamageEffects(enemy);
-  }
-
-  if (enemy.type === "boss") {
-    applyFinalBossDamageEffects(enemy);
-  }
+  DAMAGE_EFFECTS_BY_TYPE[enemy.type]?.(enemy);
 
   if (enemy.health <= 0) {
     enemy.health = 0;
@@ -324,4 +317,8 @@ function returnHome(enemy, deltaTime) {
 
   enemy.x += (distanceX / distanceToHome) * returnStep;
   enemy.y += (distanceY / distanceToHome) * returnStep;
+}
+
+function applyProjectileReaction(roomEnemies, enemy, projectile) {
+  return PROJECTILE_REACTIONS.some((reaction) => reaction(roomEnemies, enemy, projectile));
 }

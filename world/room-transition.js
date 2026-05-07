@@ -1,8 +1,95 @@
-import { rectanglesOverlap } from "../game-utils.js";
+import { getRoundedHitbox, rectanglesOverlap } from "../game-utils.js";
 import { WALL_THICKNESS } from "./room-constants.js";
 import { isPlayerAlignedWithDoor } from "./door-geometry.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;
+const DUNGEON_ROOM_ENTRY_GRACE_DURATION = 0.35;
+const ROOM_EDGE_TRANSITIONS = [
+  {
+    edge: "right",
+    neighborKey: "right",
+    directionX: -1,
+    directionY: 0,
+    hasCrossed(player, canvas) {
+      return player.x >= canvas.width;
+    },
+    movePlayerIntoNextRoom(player) {
+      player.x = 0;
+    },
+    keepPlayerInsideRoom(player, canvas) {
+      player.x = canvas.width - WALL_THICKNESS - player.width;
+    },
+    pushPlayerOutOfBlockers(player) {
+      player.x += 1;
+    },
+    canKeepPushing(player, canvas) {
+      return player.x < canvas.width;
+    }
+  },
+  {
+    edge: "left",
+    neighborKey: "left",
+    directionX: 1,
+    directionY: 0,
+    hasCrossed(player) {
+      return player.x + player.width <= 0;
+    },
+    movePlayerIntoNextRoom(player, canvas) {
+      player.x = canvas.width - player.width;
+    },
+    keepPlayerInsideRoom(player) {
+      player.x = WALL_THICKNESS;
+    },
+    pushPlayerOutOfBlockers(player) {
+      player.x -= 1;
+    },
+    canKeepPushing(player) {
+      return player.x > -player.width;
+    }
+  },
+  {
+    edge: "top",
+    neighborKey: "up",
+    directionX: 0,
+    directionY: 1,
+    hasCrossed(player) {
+      return player.y + player.height <= 0;
+    },
+    movePlayerIntoNextRoom(player, canvas) {
+      player.y = canvas.height - player.height;
+    },
+    keepPlayerInsideRoom(player) {
+      player.y = WALL_THICKNESS;
+    },
+    pushPlayerOutOfBlockers(player) {
+      player.y -= 1;
+    },
+    canKeepPushing(player) {
+      return player.y > -player.height;
+    }
+  },
+  {
+    edge: "bottom",
+    neighborKey: "down",
+    directionX: 0,
+    directionY: -1,
+    hasCrossed(player, canvas) {
+      return player.y >= canvas.height;
+    },
+    movePlayerIntoNextRoom(player) {
+      player.y = 0;
+    },
+    keepPlayerInsideRoom(player, canvas) {
+      player.y = canvas.height - WALL_THICKNESS - player.height;
+    },
+    pushPlayerOutOfBlockers(player) {
+      player.y += 1;
+    },
+    canKeepPushing(player, canvas) {
+      return player.y < canvas.height;
+    }
+  }
+];
 
 export function isTransitioning(world) {
   return world.transition !== null;
@@ -30,7 +117,7 @@ export function handleWorldTransition(world, player, roomPropsByRoom, canvas, de
   }
 
   const currentRoomProps = roomPropsByRoom[world.currentRoomIndex] ?? [];
-  const enteredFromEdge = getEnteredRoomEdge(completedTransition);
+  const enteredFromEdge = getTransitionByDirection(completedTransition);
 
   if (!enteredFromEdge) {
     return;
@@ -77,78 +164,42 @@ export function getRoomTransitionOffsets(world, canvas) {
 
 function tryStartDoorTransition(session, room, canvas) {
   const player = session.player;
-  const transitionChecks = [
-    { edge: "right", crossed: player.x >= canvas.width, directionX: -1, directionY: 0, resetPlayer() { player.x = 0; } },
-    { edge: "left", crossed: player.x + player.width <= 0, directionX: 1, directionY: 0, resetPlayer() { player.x = canvas.width - player.width; } },
-    { edge: "top", crossed: player.y + player.height <= 0, directionX: 0, directionY: 1, resetPlayer() { player.y = canvas.height - player.height; } },
-    { edge: "bottom", crossed: player.y >= canvas.height, directionX: 0, directionY: -1, resetPlayer() { player.y = 0; } }
-  ];
+  const crossedEdge = findCrossedRoomEdge(player, canvas);
 
-  for (const check of transitionChecks) {
-    if (!check.crossed) {
-      continue;
-    }
-
-    const door = room.doors[check.edge];
-
-    if (!canUseDoor(session, door, canvas)) {
-      keepPlayerInsideDoorRoom(player, check.edge, canvas);
-      return false;
-    }
-
-    check.resetPlayer();
-    startRoomTransition(session, door.toRoomIndex, check.directionX, check.directionY);
-    return true;
+  if (!crossedEdge) {
+    return false;
   }
 
-  return false;
-}
+  const door = room.doors[crossedEdge.edge];
 
-function keepPlayerInsideDoorRoom(player, edge, canvas) {
-  if (edge === "right") {
-    player.x = canvas.width - WALL_THICKNESS - player.width;
-    return;
+  if (!canUseDoor(session, door, canvas)) {
+    crossedEdge.keepPlayerInsideRoom(player, canvas);
+    return false;
   }
 
-  if (edge === "left") {
-    player.x = WALL_THICKNESS;
-    return;
-  }
-
-  if (edge === "top") {
-    player.y = WALL_THICKNESS;
-    return;
-  }
-
-  if (edge === "bottom") {
-    player.y = canvas.height - WALL_THICKNESS - player.height;
-  }
+  crossedEdge.movePlayerIntoNextRoom(player, canvas);
+  startRoomTransition(session, door.toRoomIndex, crossedEdge.directionX, crossedEdge.directionY);
+  return true;
 }
 
 function tryStartOpenEdgeTransition(player, world, canvas) {
   const room = world.rooms[world.currentRoomIndex];
 
-  if (!room.walls.right && room.neighbors.right !== undefined && player.x >= canvas.width) {
-    startWorldTransition(world, room.neighbors.right, -1, 0);
-    player.x = 0;
-    return true;
-  }
+  for (const edgeTransition of ROOM_EDGE_TRANSITIONS) {
+    const hasWall = room.walls[edgeTransition.edge];
+    const neighboringRoomIndex = room.neighbors[edgeTransition.neighborKey];
 
-  if (!room.walls.left && room.neighbors.left !== undefined && player.x + player.width <= 0) {
-    startWorldTransition(world, room.neighbors.left, 1, 0);
-    player.x = canvas.width - player.width;
-    return true;
-  }
+    if (hasWall || neighboringRoomIndex === undefined || !edgeTransition.hasCrossed(player, canvas)) {
+      continue;
+    }
 
-  if (!room.walls.top && room.neighbors.up !== undefined && player.y + player.height <= 0) {
-    startWorldTransition(world, room.neighbors.up, 0, 1);
-    player.y = canvas.height - player.height;
-    return true;
-  }
-
-  if (!room.walls.bottom && room.neighbors.down !== undefined && player.y >= canvas.height) {
-    startWorldTransition(world, room.neighbors.down, 0, -1);
-    player.y = 0;
+    startWorldTransition(
+      world,
+      neighboringRoomIndex,
+      edgeTransition.directionX,
+      edgeTransition.directionY
+    );
+    edgeTransition.movePlayerIntoNextRoom(player, canvas);
     return true;
   }
 
@@ -187,9 +238,7 @@ function startRoomTransition(session, toRoomIndex, directionX, directionY) {
   startWorldTransition(world, toRoomIndex, directionX, directionY);
 
   if (session.activeWorldKey === "dungeon") {
-    session.progress.dungeon.visitedRooms[toRoomIndex] = true;
-    session.roomEntryGraceTimer = 0.35;
-    session.blockedDoorMessagesShown = {};
+    applyDungeonRoomEntryState(session, toRoomIndex);
   }
 }
 
@@ -206,69 +255,32 @@ function startWorldTransition(world, toRoomIndex, directionX, directionY) {
   world.currentRoomIndex = toRoomIndex;
 }
 
-function getEnteredRoomEdge(completedTransition) {
-  if (completedTransition.directionX > 0) {
-    return "right";
-  }
-
-  if (completedTransition.directionX < 0) {
-    return "left";
-  }
-
-  if (completedTransition.directionY > 0) {
-    return "bottom";
-  }
-
-  if (completedTransition.directionY < 0) {
-    return "top";
-  }
-
-  return null;
+function findCrossedRoomEdge(player, canvas) {
+  return ROOM_EDGE_TRANSITIONS.find((edgeTransition) => edgeTransition.hasCrossed(player, canvas)) ?? null;
 }
 
-function pushPlayerOutOfEdgeBlockers(player, roomProps, edge, canvas) {
-  const step = 1;
+function getTransitionByDirection(transition) {
+  return ROOM_EDGE_TRANSITIONS.find((edgeTransition) => (
+    edgeTransition.directionX === transition.directionX
+    && edgeTransition.directionY === transition.directionY
+  )) ?? null;
+}
 
-  if (edge === "left") {
-    while (player.x < canvas.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.x += step;
-    }
-    return;
-  }
-
-  if (edge === "right") {
-    while (player.x > -player.width && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.x -= step;
-    }
-    return;
-  }
-
-  if (edge === "top") {
-    while (player.y < canvas.height && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.y += step;
-    }
-    return;
-  }
-
-  if (edge === "bottom") {
-    while (player.y > -player.height && overlapsBlockingProp(roomProps, getEntityHitbox(player))) {
-      player.y -= step;
-    }
+function pushPlayerOutOfEdgeBlockers(player, roomProps, edgeTransition, canvas) {
+  while (edgeTransition.canKeepPushing(player, canvas) && overlapsBlockingProp(roomProps, getRoundedHitbox(player))) {
+    edgeTransition.pushPlayerOutOfBlockers(player);
   }
 }
 
-function getEntityHitbox(entity) {
-  return {
-    x: Math.round(entity.x),
-    y: Math.round(entity.y),
-    width: entity.width,
-    height: entity.height
-  };
+function applyDungeonRoomEntryState(session, roomIndex) {
+  session.progress.dungeon.visitedRooms[roomIndex] = true;
+  session.roomEntryGraceTimer = DUNGEON_ROOM_ENTRY_GRACE_DURATION;
+  session.blockedDoorMessagesShown = {};
 }
 
 function overlapsBlockingProp(roomProps, hitbox) {
   for (const prop of roomProps) {
-    if (!prop.blocksMovement || prop.destroyed) {
+    if (!prop.blocksMovement || prop.destroyed || prop.hidden) {
       continue;
     }
 

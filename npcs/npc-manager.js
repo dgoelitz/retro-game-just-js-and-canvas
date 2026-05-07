@@ -1,4 +1,5 @@
 import { NPC_DIALOGUE_TEXT } from "../dialogue/dialogue-text.js";
+import { createWorldKeyMap } from "../game-utils.js";
 import { createOverworldNpcsByRoom as createOverworldNpcMap } from "../overworld/overworld.js";
 
 export function createOverworldNpcsByRoom() {
@@ -6,10 +7,7 @@ export function createOverworldNpcsByRoom() {
 }
 
 export function createNpcsByWorldKey() {
-  return {
-    overworld: createOverworldNpcsByRoom(),
-    dungeon: {}
-  };
+  return createWorldKeyMap(createOverworldNpcsByRoom(), {});
 }
 
 export function getNpcDialogue(npc, hasSword) {
