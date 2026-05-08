@@ -2,9 +2,10 @@ import { GAME_STATE_MAP, getActiveWorld } from "../game-state.js";
 import { constrainPlayerToRoom, resolveRoomGeometryCollisions, tryStartRoomTransition } from "../world/world.js";
 import { resolveNpcCollisions } from "../npcs/npc-interaction.js";
 import { resolveRoomPropCollisions } from "../world/room-props.js";
+import { WORLD_KEY_DUNGEON } from "../world/world-keys.js";
 
 export function tryOpenMap(session, input) {
-  if (!input.map || session.activeWorldKey !== "dungeon") {
+  if (!input.map || session.activeWorldKey !== WORLD_KEY_DUNGEON) {
     return false;
   }
 

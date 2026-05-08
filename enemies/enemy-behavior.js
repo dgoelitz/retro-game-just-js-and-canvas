@@ -33,14 +33,16 @@ const ENEMY_UPDATERS = {
   patrol: updatePatrolEnemy,
   turret: updateTurretEnemy,
   "fixed-turret": updateFixedTurretEnemy,
-  stone(enemy, _player, deltaTime) {
+  stone(enemy, { deltaTime }) {
     updateOrbitEnemy(enemy, deltaTime, 0.9);
   },
-  snake(enemy, _player, deltaTime) {
+  snake(enemy, { deltaTime }) {
     updateSnakeEnemy(enemy, deltaTime);
   },
-  miniboss: updateMiniboss,
-  boss(enemy, _player, deltaTime, canvas, _projectiles, roomEnemies) {
+  miniboss(enemy, { player, deltaTime, canvas, projectiles }) {
+    updateMiniboss(enemy, player, deltaTime, canvas, projectiles);
+  },
+  boss(enemy, { deltaTime, canvas, roomEnemies }) {
     updateBoss(enemy, deltaTime, canvas, roomEnemies);
   }
 };
@@ -63,7 +65,9 @@ const DAMAGE_EFFECTS_BY_TYPE = {
   boss: applyFinalBossDamageEffects
 };
 
-export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomEnemies) {
+export function updateEnemy(enemy, context) {
+  const { deltaTime } = context;
+
   tickTimer(enemy, "invulnerableTimer", deltaTime);
   tickTimer(enemy, "hitPauseTimer", deltaTime);
 
@@ -72,7 +76,7 @@ export function updateEnemy(enemy, player, deltaTime, canvas, projectiles, roomE
   }
 
   const updateEnemyByType = ENEMY_UPDATERS[enemy.type];
-  updateEnemyByType?.(enemy, player, deltaTime, canvas, projectiles, roomEnemies);
+  updateEnemyByType?.(enemy, context);
 }
 
 export function hitEnemy(enemy, attackHitbox) {
@@ -131,7 +135,7 @@ export function blockEnemyWithShield(enemy, shieldHitbox, playerFacing) {
   return true;
 }
 
-function updatePatrolEnemy(enemy, player, deltaTime, canvas) {
+function updatePatrolEnemy(enemy, { player, deltaTime, canvas }) {
   if (isPlayerInChaseRange(enemy, player)) {
     enemy.mode = ENEMY_MODE_CHASE;
   } else if (enemy.mode === ENEMY_MODE_CHASE) {
@@ -149,7 +153,7 @@ function updatePatrolEnemy(enemy, player, deltaTime, canvas) {
   clampToCanvas(enemy, canvas);
 }
 
-function updateTurretEnemy(enemy, player, deltaTime, projectiles) {
+function updateTurretEnemy(enemy, { player, deltaTime, projectiles }) {
   tickTimer(enemy, "shootTimer", deltaTime);
 
   if (enemy.shootTimer > 0) {
@@ -162,7 +166,7 @@ function updateTurretEnemy(enemy, player, deltaTime, projectiles) {
   spawnBulletProjectile(projectiles, enemy, velocity);
 }
 
-function updateFixedTurretEnemy(enemy, deltaTime, projectiles) {
+function updateFixedTurretEnemy(enemy, { deltaTime, projectiles }) {
   tickTimer(enemy, "shootTimer", deltaTime);
 
   if (enemy.shootTimer > 0) {
@@ -193,11 +197,6 @@ function updateOrbitEnemy(enemy, deltaTime, speedMultiplier) {
 }
 
 function updateSnakeEnemy(enemy, deltaTime) {
-  if (!enemy.pathRect) {
-    updateOrbitEnemy(enemy, deltaTime, 0.5);
-    return;
-  }
-
   enemy.pathProgress += enemy.pathSpeed * enemy.pathDirection * deltaTime;
 
   const headPosition = getRectangularPathPosition(enemy.pathRect, enemy.pathProgress);

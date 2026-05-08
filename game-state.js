@@ -1,23 +1,23 @@
 import { DUNGEON_0_ROOM_COUNT } from "./dungeons/dungeon-0/dungeon-0.js";
 import { createEnemiesByWorldKey } from "./enemies/enemy-manager.js";
 import { applyDebugStart as applyGameDebugStart } from "./game-state-debug.js";
-import { createWorldKeyMap } from "./game-utils.js";
 import { createNpcsByWorldKey } from "./npcs/npc-manager.js";
 import { createPlayer, setPlayerPosition } from "./player/player.js";
 import { createShield } from "./player/shield.js";
 import { createSword } from "./player/sword.js";
 import { createRoomPropsByWorldKey } from "./world/room-props.js";
 import { createDungeonRooms, createOverworldRooms } from "./world/room-data.js";
+import { DUNGEON_ROOM_ENTRY_GRACE_DURATION } from "./world/room-constants.js";
 import { createWorld } from "./world/world.js";
+import { createWorldKeyMap, WORLD_KEY_DUNGEON, WORLD_KEY_OVERWORLD } from "./world/world-keys.js";
 
 export const GAME_STATE_PLAYING = "playing";
 export const GAME_STATE_DIALOGUE = "dialogue";
 export const GAME_STATE_GAME_OVER = "game-over";
 export const GAME_STATE_MAP = "map";
-const DUNGEON_ROOM_ENTRY_GRACE_DURATION = 0.35;
 
 const OVERWORLD_START = {
-  worldKey: "overworld",
+  worldKey: WORLD_KEY_OVERWORLD,
   roomIndex: 0,
   playerPosition: {
     x: 40,
@@ -26,7 +26,7 @@ const OVERWORLD_START = {
 };
 
 const DUNGEON_START = {
-  worldKey: "dungeon",
+  worldKey: WORLD_KEY_DUNGEON,
   roomIndex: 0,
   playerPosition: {
     x: 76,
@@ -65,10 +65,6 @@ export function applyDebugStart(session, debugStartKey) {
     markCurrentRoomVisited,
     setGameOverDestination
   });
-}
-
-export function resetGameSession(session) {
-  Object.assign(session, createGameSession());
 }
 
 export function respawnAfterGameOver(session) {
@@ -124,7 +120,7 @@ export function travelToDestination(session, destination) {
 }
 
 export function markCurrentRoomVisited(session) {
-  if (session.activeWorldKey !== "dungeon") {
+  if (session.activeWorldKey !== WORLD_KEY_DUNGEON) {
     return;
   }
 

@@ -2,10 +2,11 @@ import { createDialoguePages } from "../../dialogue/dialogue-pages.js";
 import { startDialogue } from "../../dialogue/dialogue-state.js";
 import { GAME_STATE_PLAYING, getActiveRoomPropsByRoom, getActiveWorld } from "../../game-state.js";
 import { rectanglesOverlap } from "../../game-utils.js";
+import { WORLD_KEY_DUNGEON } from "../../world/world-keys.js";
 import { getDungeon0RoomDefinition } from "./dungeon-0.js";
 
 export function handleDungeon0RoomEntry(session, ctx, canvas) {
-  if (session.activeWorldKey !== "dungeon" || session.mode !== GAME_STATE_PLAYING) {
+  if (session.activeWorldKey !== WORLD_KEY_DUNGEON || session.mode !== GAME_STATE_PLAYING) {
     return;
   }
 
@@ -35,7 +36,7 @@ export function handleDungeon0RoomEntry(session, ctx, canvas) {
 }
 
 export function updateDungeon0RoomRules(session, ctx, canvas) {
-  if (session.activeWorldKey !== "dungeon") {
+  if (session.activeWorldKey !== WORLD_KEY_DUNGEON) {
     return;
   }
 

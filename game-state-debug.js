@@ -1,5 +1,6 @@
 import { DUNGEON_0_ROOM_COUNT } from "./dungeons/dungeon-0/dungeon-0.js";
 import { setPlayerPosition } from "./player/player.js";
+import { WORLD_KEY_DUNGEON } from "./world/world-keys.js";
 
 const DUNGEON_PROGRESS_FLAGS = {
   room1Cleared: true,
@@ -53,7 +54,7 @@ export function applyDebugStart(session, debugStartKey, helpers) {
 }
 
 function startDungeonDebugRun(session, helpers, inventoryOverrides) {
-  session.activeWorldKey = "dungeon";
+  session.activeWorldKey = WORLD_KEY_DUNGEON;
   Object.assign(session.inventory, inventoryOverrides);
   session.progress.dungeon.flags.room1Cleared = true;
   session.enemiesByWorldKey.dungeon[0] = [];
@@ -68,7 +69,7 @@ function startDungeonDebugRun(session, helpers, inventoryOverrides) {
 }
 
 function applyMinibossDebugStart(session, helpers) {
-  session.activeWorldKey = "dungeon";
+  session.activeWorldKey = WORLD_KEY_DUNGEON;
   Object.assign(session.inventory, {
     hasSword: true,
     hasMap: true,
@@ -93,14 +94,14 @@ function applyMinibossDebugStart(session, helpers) {
   setPlayerPosition(session.player, playerPosition);
   helpers.markCurrentRoomVisited(session);
   helpers.setGameOverDestination(session, {
-    worldKey: "dungeon",
+    worldKey: WORLD_KEY_DUNGEON,
     roomIndex: 8,
     playerPosition
   });
 }
 
 function applyRoom11DebugStart(session, helpers, { hasBossKey }) {
-  session.activeWorldKey = "dungeon";
+  session.activeWorldKey = WORLD_KEY_DUNGEON;
   Object.assign(session.inventory, {
     hasSword: true,
     hasShield: true,
@@ -135,14 +136,14 @@ function applyRoom11DebugStart(session, helpers, { hasBossKey }) {
   setPlayerPosition(session.player, playerPosition);
   helpers.markCurrentRoomVisited(session);
   helpers.setGameOverDestination(session, {
-    worldKey: "dungeon",
+    worldKey: WORLD_KEY_DUNGEON,
     roomIndex: 8,
     playerPosition
   });
 }
 
 function applyBossDebugStart(session, helpers) {
-  session.activeWorldKey = "dungeon";
+  session.activeWorldKey = WORLD_KEY_DUNGEON;
   Object.assign(session.inventory, {
     hasSword: true,
     hasShield: true,

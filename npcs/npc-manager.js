@@ -1,6 +1,6 @@
 import { NPC_DIALOGUE_TEXT } from "../dialogue/dialogue-text.js";
-import { createWorldKeyMap } from "../game-utils.js";
 import { createOverworldNpcsByRoom as createOverworldNpcMap } from "../overworld/overworld.js";
+import { createWorldKeyMap } from "../world/world-keys.js";
 
 export function createOverworldNpcsByRoom() {
   return createOverworldNpcMap();

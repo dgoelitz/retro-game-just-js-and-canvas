@@ -1,9 +1,9 @@
 import { getRoundedHitbox, rectanglesOverlap } from "../game-utils.js";
-import { WALL_THICKNESS } from "./room-constants.js";
+import { DUNGEON_ROOM_ENTRY_GRACE_DURATION, WALL_THICKNESS } from "./room-constants.js";
 import { isPlayerAlignedWithDoor } from "./door-geometry.js";
+import { WORLD_KEY_DUNGEON } from "./world-keys.js";
 
 const ROOM_TRANSITION_DURATION = 0.35;
-const DUNGEON_ROOM_ENTRY_GRACE_DURATION = 0.35;
 const ROOM_EDGE_TRANSITIONS = [
   {
     edge: "right",
@@ -237,7 +237,7 @@ function startRoomTransition(session, toRoomIndex, directionX, directionY) {
   const world = session.worldsByKey[session.activeWorldKey];
   startWorldTransition(world, toRoomIndex, directionX, directionY);
 
-  if (session.activeWorldKey === "dungeon") {
+  if (session.activeWorldKey === WORLD_KEY_DUNGEON) {
     applyDungeonRoomEntryState(session, toRoomIndex);
   }
 }

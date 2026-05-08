@@ -3,13 +3,6 @@ export const ZERO_OFFSET = {
   y: 0
 };
 
-export function createWorldKeyMap(overworldValue, dungeonValue) {
-  return {
-    overworld: overworldValue,
-    dungeon: dungeonValue
-  };
-}
-
 export function tickTimer(target, key, deltaTime) {
   if (target[key] <= 0) {
     return;

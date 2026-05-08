@@ -10,10 +10,6 @@ export function getDrawEnemy(enemy) {
 }
 
 export function getSnakeSegments(enemy) {
-  if (!enemy.pathRect) {
-    return [getDrawEnemy(enemy)];
-  }
-
   const segments = [];
 
   for (let i = 0; i < enemy.bodyLength; i += 1) {

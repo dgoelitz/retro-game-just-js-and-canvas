@@ -8,6 +8,7 @@ import {
 import { tryTalkToNearbyNpc } from "../npcs/npc-interaction.js";
 import { getPlayerHitbox } from "../player/player.js";
 import { interactWithRoomProps } from "../world/room-props.js";
+import { WORLD_KEY_DUNGEON } from "../world/world-keys.js";
 
 export function handleRoomInteraction(session, input, roomState, ctx, canvas) {
   if (!input.interact) {
@@ -37,7 +38,7 @@ export function updateGameOverStatus(session) {
   session.sword.active = false;
   session.shield.active = false;
 
-  if (session.activeWorldKey === "dungeon") {
+  if (session.activeWorldKey === WORLD_KEY_DUNGEON) {
     setGameOverDestination(session, getDungeonRespawnDestination());
     return;
   }

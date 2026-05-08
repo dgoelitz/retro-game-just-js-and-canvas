@@ -1,4 +1,5 @@
 import { createBush, createDungeonEntrance } from "../../world/room-prop-factories.js";
+import { WORLD_KEY_DUNGEON } from "../../world/world-keys.js";
 import { createOverworldRoomDefinition } from "../room-helpers.js";
 
 export function createRoom06() {
@@ -24,7 +25,7 @@ export function createRoom06() {
           x: 66,
           y: 12,
           destination: {
-            worldKey: "dungeon",
+            worldKey: WORLD_KEY_DUNGEON,
             roomIndex: 0,
             playerX: 76,
             playerY: 66

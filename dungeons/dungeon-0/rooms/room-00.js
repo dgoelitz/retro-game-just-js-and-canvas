@@ -1,5 +1,6 @@
 import { createPatrolEnemy } from "../../../enemies/enemy-factories.js";
 import { createDungeonExit } from "../../../world/room-prop-factories.js";
+import { WORLD_KEY_OVERWORLD } from "../../../world/world-keys.js";
 import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
 
 export function createRoom00() {
@@ -22,7 +23,7 @@ export function createRoom00() {
           x: 66,
           y: 72,
           destination: {
-            worldKey: "overworld",
+            worldKey: WORLD_KEY_OVERWORLD,
             roomIndex: 6,
             playerX: 76,
             playerY: 24

@@ -20,7 +20,13 @@ export function updateRoomCombat(session, previousPlayerPosition, deltaTime, can
   const attackHitbox = getAttackHitbox(session.player, session.sword);
 
   for (const enemy of roomState.roomEnemies) {
-    updateEnemy(enemy, session.player, deltaTime, canvas, roomState.roomProjectiles, roomState.roomEnemies);
+    updateEnemy(enemy, {
+      player: session.player,
+      deltaTime,
+      canvas,
+      projectiles: roomState.roomProjectiles,
+      roomEnemies: roomState.roomEnemies
+    });
     hitEnemy(enemy, attackHitbox);
   }
 

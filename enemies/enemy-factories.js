@@ -61,30 +61,6 @@ export function createStoneEnemy(overrides = {}) {
   });
 }
 
-export function createSnakeEnemy(overrides = {}) {
-  const centerX = overrides.homeX ?? overrides.x ?? 100;
-  const centerY = overrides.homeY ?? overrides.y ?? 48;
-  const orbitRadiusX = overrides.orbitRadiusX ?? 10;
-  const orbitRadiusY = overrides.orbitRadiusY ?? 10;
-  const orbitAngle = overrides.orbitAngle ?? 0;
-
-  return createEnemy({
-    type: "snake",
-    x: centerX + Math.cos(orbitAngle) * orbitRadiusX,
-    y: centerY + Math.sin(orbitAngle) * orbitRadiusY,
-    homeX: centerX,
-    homeY: centerY,
-    width: 8,
-    height: 8,
-    health: 99,
-    invincible: true,
-    orbitAngle,
-    orbitRadiusX,
-    orbitRadiusY,
-    ...overrides
-  });
-}
-
 export function createRectangularSnakeEnemy(overrides = {}) {
   const pathRect = overrides.pathRect ?? { left: 4, top: 4, right: 148, bottom: 78 };
   const pathProgress = overrides.pathProgress ?? 0;

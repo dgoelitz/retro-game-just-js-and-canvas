@@ -1,7 +1,6 @@
 import { startTextDialogue } from "../dialogue/dialogue-helpers.js";
 import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../dialogue/dialogue-text.js";
 import {
-  createWorldKeyMap,
   expandRect,
   rectanglesOverlap,
   resolveAxisSeparatedCollision,
@@ -9,6 +8,7 @@ import {
 } from "../game-utils.js";
 import { WALL_COLOR } from "./room-constants.js";
 import { createDungeonRoomPropsByRoom, createOverworldRoomPropsByRoom } from "./room-prop-layouts.js";
+import { createWorldKeyMap } from "./world-keys.js";
 
 const BUSH_COLOR = "#00a84f";
 const BUSH_HIGHLIGHT_COLOR = "#6abe30";
