@@ -1,11 +1,11 @@
 import { createProjectile } from "../../combat/projectiles.js";
-import { createEnemy } from "../enemy-base.js";
-import { clampValue } from "../enemy-geometry.js";
+import { createEnemy } from "../core/base.js";
+import { clampValue } from "../core/geometry.js";
 import {
   MINIBOSS_MODE_REST,
   MINIBOSS_MODE_SPIN,
   MINIBOSS_MODE_THROW
-} from "../enemy-state.js";
+} from "../core/state.js";
 
 const ROOM_PADDING = 4;
 const THROW_DURATION = 3.2;

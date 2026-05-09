@@ -1,4 +1,4 @@
-import { ZERO_OFFSET } from "../game-utils.js";
+import { ZERO_OFFSET } from "../utils.js";
 
 const SHIELD_COLOR = "#7a4f24";
 const SHIELD_BORDER_COLOR = "#4f3422";

@@ -1,6 +1,6 @@
-import { createPatrolEnemy } from "../../../enemies/enemy-factories.js";
-import { createChest } from "../../../world/room-prop-factories.js";
-import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
+import { createPatrolEnemy } from "../../../enemies/setup/factories.js";
+import { createChest } from "../../../world/props/factories.js";
+import { createDoor, createDungeon0RoomDefinition } from "../helpers.js";
 
 export function createRoom07() {
   return createDungeon0RoomDefinition({

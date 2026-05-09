@@ -1,11 +1,11 @@
-import { tickTimer } from "../../game-utils.js";
-import { createEnemy } from "../enemy-base.js";
-import { clampValue, getCenter } from "../enemy-geometry.js";
+import { tickTimer } from "../../utils.js";
+import { createEnemy } from "../core/base.js";
+import { clampValue, getCenter } from "../core/geometry.js";
 import {
   BOSS_MODE_IMPACT,
   BOSS_MODE_SLAM,
   BOSS_MODE_STUNNED
-} from "../enemy-state.js";
+} from "../core/state.js";
 
 const ROOM_PADDING = 4;
 const SPEED_RAMP = 52;

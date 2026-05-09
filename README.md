@@ -27,15 +27,19 @@ Then open [http://localhost:8000](http://localhost:8000).
 
 - `main.js`: bootstraps the canvas and starts the game
 - `game/`: high-level frame update and rendering flow
-- `game-state.js`: creates and resets the current game session
+- `game/session.js`: creates and resets the current game session
 - `input.js`: tracks keyboard input state
-- `game-utils.js`: shared utility helpers
+- `utils.js`: shared utility helpers
 - `dialogue/`: dialogue config, page-building, and dialogue state flow
 - `player/`: player movement, health, HUD, and sword behavior
-- `enemies/`: enemy behavior and room enemy setup
+- `enemies/`: enemy facade plus grouped enemy behavior, rendering, setup, core helpers, and bosses
 - `npcs/`: NPC placement, dialogue lookup, and NPC interaction rules
-- `world/`: room data, wall rules, and room transition logic
+- `world/`: world facade plus grouped room data, doors, props, transitions, and rendering
+- `overworld/`: overworld room content
+- `dungeons/`: dungeon room content and dungeon-specific rules
 - `ui/`: overlay rendering such as the game-over screen and dialogue box
+
+Only public facades and room registries use `index.js`; ordinary implementation files use descriptive names for clearer editor tabs.
 
 ## Current world
 

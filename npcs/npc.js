@@ -1,4 +1,4 @@
-import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
+import { rectanglesOverlap, ZERO_OFFSET } from "../utils.js";
 
 const NPC_COLOR = "#00e756";
 const TALK_DISTANCE = 6;

@@ -1,6 +1,6 @@
-import { createTurretEnemy } from "../../../enemies/enemy-factories.js";
-import { createTarget } from "../../../world/room-prop-factories.js";
-import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
+import { createTurretEnemy } from "../../../enemies/setup/factories.js";
+import { createTarget } from "../../../world/props/factories.js";
+import { createDoor, createDungeon0RoomDefinition } from "../helpers.js";
 
 export function createRoom01() {
   return createDungeon0RoomDefinition({

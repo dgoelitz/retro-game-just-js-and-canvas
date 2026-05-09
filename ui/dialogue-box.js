@@ -8,7 +8,7 @@ import {
   DIALOGUE_FONT,
   DIALOGUE_TEXT_COLOR,
   DIALOGUE_TEXT_LINE_HEIGHT
-} from "../dialogue/dialogue-config.js";
+} from "../dialogue/config.js";
 
 export function renderDialogueBox(ctx, canvas, dialogue) {
   const boxBounds = getDialogueBoxBounds(canvas);

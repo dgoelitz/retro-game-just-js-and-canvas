@@ -1,4 +1,4 @@
-import { rectanglesOverlap, ZERO_OFFSET } from "../game-utils.js";
+import { rectanglesOverlap, ZERO_OFFSET } from "../utils.js";
 
 const BULLET_COLOR = "#94b0c2";
 const SWORD_PROJECTILE_COLOR = "#fff1e8";

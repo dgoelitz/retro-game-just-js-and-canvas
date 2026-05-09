@@ -1,7 +1,7 @@
-import { createPatrolEnemy } from "../../../enemies/enemy-factories.js";
-import { createDungeonExit } from "../../../world/room-prop-factories.js";
-import { WORLD_KEY_OVERWORLD } from "../../../world/world-keys.js";
-import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
+import { createPatrolEnemy } from "../../../enemies/setup/factories.js";
+import { createDungeonExit } from "../../../world/props/factories.js";
+import { WORLD_KEY_OVERWORLD } from "../../../world/keys.js";
+import { createDoor, createDungeon0RoomDefinition } from "../helpers.js";
 
 export function createRoom00() {
   return createDungeon0RoomDefinition({

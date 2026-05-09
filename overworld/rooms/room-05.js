@@ -1,6 +1,6 @@
-import { createBush, createWallBlock } from "../../world/room-prop-factories.js";
-import { WALL_THICKNESS } from "../../world/room-constants.js";
-import { createOverworldRoomDefinition } from "../room-helpers.js";
+import { createBush, createWallBlock } from "../../world/props/factories.js";
+import { WALL_THICKNESS } from "../../world/rooms/constants.js";
+import { createOverworldRoomDefinition } from "../helpers.js";
 
 export function createRoom05() {
   return createOverworldRoomDefinition({

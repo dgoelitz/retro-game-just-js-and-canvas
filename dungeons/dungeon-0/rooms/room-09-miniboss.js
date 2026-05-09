@@ -1,7 +1,7 @@
-import { DUNGEON_DIALOGUE_TEXT } from "../../../dialogue/dialogue-text.js";
+import { DUNGEON_DIALOGUE_TEXT } from "../../../dialogue/text.js";
 import { createMinibossEnemy } from "../../../enemies/bosses/miniboss.js";
-import { createChest } from "../../../world/room-prop-factories.js";
-import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
+import { createChest } from "../../../world/props/factories.js";
+import { createDoor, createDungeon0RoomDefinition } from "../helpers.js";
 
 export function createRoom09Miniboss() {
   return createDungeon0RoomDefinition({

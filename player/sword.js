@@ -1,4 +1,4 @@
-import { tickTimer, ZERO_OFFSET } from "../game-utils.js";
+import { tickTimer, ZERO_OFFSET } from "../utils.js";
 
 const SWORD_HANDLE_COLOR = "#7a4f24";
 const SWORD_BLADE_COLOR = "#fff1e8";

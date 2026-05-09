@@ -1,9 +1,9 @@
-import { createSnakePair } from "../../../enemies/enemy-factories.js";
+import { createSnakePair } from "../../../enemies/setup/factories.js";
 import {
   createDoor,
   createDungeon0RoomDefinition,
   createWall
-} from "../room-helpers.js";
+} from "../helpers.js";
 
 export function createRoom08() {
   return createDungeon0RoomDefinition({

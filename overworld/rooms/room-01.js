@@ -1,5 +1,5 @@
-import { createPatrolEnemy } from "../../enemies/enemy-factories.js";
-import { createOverworldRoomDefinition } from "../room-helpers.js";
+import { createPatrolEnemy } from "../../enemies/setup/factories.js";
+import { createOverworldRoomDefinition } from "../helpers.js";
 
 export function createRoom01() {
   return createOverworldRoomDefinition({

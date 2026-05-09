@@ -1,4 +1,4 @@
-import { tickTimer, ZERO_OFFSET } from "../game-utils.js";
+import { tickTimer, ZERO_OFFSET } from "../utils.js";
 import { renderShield, updateShield } from "./shield.js";
 import { renderSword, updateSword } from "./sword.js";
 

@@ -1,5 +1,5 @@
-import { createSwitch } from "../../../world/room-prop-factories.js";
-import { createDoor, createDungeon0RoomDefinition } from "../room-helpers.js";
+import { createSwitch } from "../../../world/props/factories.js";
+import { createDoor, createDungeon0RoomDefinition } from "../helpers.js";
 
 export function createRoom11() {
   return createDungeon0RoomDefinition({

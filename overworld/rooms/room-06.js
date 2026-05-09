@@ -1,6 +1,6 @@
-import { createBush, createDungeonEntrance } from "../../world/room-prop-factories.js";
-import { WORLD_KEY_DUNGEON } from "../../world/world-keys.js";
-import { createOverworldRoomDefinition } from "../room-helpers.js";
+import { createBush, createDungeonEntrance } from "../../world/props/factories.js";
+import { WORLD_KEY_DUNGEON } from "../../world/keys.js";
+import { createOverworldRoomDefinition } from "../helpers.js";
 
 export function createRoom06() {
   return createOverworldRoomDefinition({

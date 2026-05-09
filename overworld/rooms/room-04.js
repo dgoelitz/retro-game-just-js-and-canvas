@@ -1,5 +1,5 @@
 import { createNpc } from "../../npcs/npc.js";
-import { createOverworldRoomDefinition } from "../room-helpers.js";
+import { createOverworldRoomDefinition } from "../helpers.js";
 
 export function createRoom04() {
   return createOverworldRoomDefinition({
