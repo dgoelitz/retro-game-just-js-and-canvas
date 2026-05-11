@@ -46,17 +46,26 @@ export function getShieldHitbox(player, shield) {
   });
 }
 
-export function getShieldSweep(player, shield, previousPlayerPosition) {
+export function getShieldMovement(player, shield, previousPlayerPosition) {
   if (!shield.active) {
     return null;
   }
 
-  const previousShieldHitbox = getShieldHitboxForPosition(player, shield, previousPlayerPosition);
-  const currentShieldHitbox = getShieldHitbox(player, shield);
-  const minX = Math.min(previousShieldHitbox.x, currentShieldHitbox.x);
-  const minY = Math.min(previousShieldHitbox.y, currentShieldHitbox.y);
-  const maxX = Math.max(previousShieldHitbox.x + previousShieldHitbox.width, currentShieldHitbox.x + currentShieldHitbox.width);
-  const maxY = Math.max(previousShieldHitbox.y + previousShieldHitbox.height, currentShieldHitbox.y + currentShieldHitbox.height);
+  const previousHitbox = getShieldHitboxForPosition(player, shield, previousPlayerPosition);
+  const currentHitbox = getShieldHitbox(player, shield);
+
+  return {
+    previousHitbox,
+    currentHitbox,
+    sweep: getRectangleSweep(previousHitbox, currentHitbox)
+  };
+}
+
+function getRectangleSweep(previousHitbox, currentHitbox) {
+  const minX = Math.min(previousHitbox.x, currentHitbox.x);
+  const minY = Math.min(previousHitbox.y, currentHitbox.y);
+  const maxX = Math.max(previousHitbox.x + previousHitbox.width, currentHitbox.x + currentHitbox.width);
+  const maxY = Math.max(previousHitbox.y + previousHitbox.height, currentHitbox.y + currentHitbox.height);
 
   return {
     x: minX,

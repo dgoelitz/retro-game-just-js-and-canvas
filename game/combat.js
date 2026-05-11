@@ -12,7 +12,7 @@ import {
   updateEnemy
 } from "../enemies/index.js";
 import { damagePlayer, getPlayerHitbox } from "../player/player.js";
-import { getShieldHitbox, getShieldSweep } from "../player/shield.js";
+import { getShieldHitbox, getShieldMovement } from "../player/shield.js";
 import { getAttackHitbox } from "../player/sword.js";
 import { hitRoomProps, hitTargetProps } from "../world/props/behavior.js";
 
@@ -41,7 +41,7 @@ export function updateRoomCombat(session, previousPlayerPosition, deltaTime, can
 function resolvePlayerDamage(session, previousPlayerPosition, roomEnemies, roomProjectiles) {
   const playerHitbox = getPlayerHitbox(session.player);
   const shieldHitbox = getShieldHitbox(session.player, session.shield);
-  const shieldSweep = getShieldSweep(session.player, session.shield, previousPlayerPosition);
+  const shieldMovement = getShieldMovement(session.player, session.shield, previousPlayerPosition);
 
   for (const enemy of roomEnemies) {
     if (blockEnemyWithShield(enemy, shieldHitbox, session.player.facing)) {
@@ -57,7 +57,7 @@ function resolvePlayerDamage(session, previousPlayerPosition, roomEnemies, roomP
     }
   }
 
-  if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldHitbox, shieldSweep)) {
+  if (damagePlayerFromProjectiles(roomProjectiles, playerHitbox, shieldMovement)) {
     damagePlayer(session.player);
   }
 }
