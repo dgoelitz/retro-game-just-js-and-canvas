@@ -40,6 +40,14 @@ export function updateProjectiles(projectiles, deltaTime, canvas) {
   }
 }
 
+export function removeInactiveProjectiles(projectiles) {
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    if (!projectiles[i].active) {
+      projectiles.splice(i, 1);
+    }
+  }
+}
+
 export function destroyProjectilesOnWalls(projectiles, walls) {
   if (walls.length === 0) {
     return;

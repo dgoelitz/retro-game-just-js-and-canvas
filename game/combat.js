@@ -1,6 +1,7 @@
 import {
   damagePlayerFromProjectiles,
   destroyProjectilesOnWalls,
+  removeInactiveProjectiles,
   updateProjectiles
 } from "../combat/projectiles.js";
 import {
@@ -36,6 +37,7 @@ export function updateRoomCombat(session, previousPlayerPosition, deltaTime, can
   hitTargetProps(roomState.roomProps, roomState.roomProjectiles);
   hitRoomProps(roomState.roomProps, attackHitbox);
   resolvePlayerDamage(session, previousPlayerPosition, roomState.roomEnemies, roomState.roomProjectiles);
+  removeInactiveProjectiles(roomState.roomProjectiles);
 }
 
 function resolvePlayerDamage(session, previousPlayerPosition, roomEnemies, roomProjectiles) {
