@@ -1,5 +1,6 @@
 import { startTextDialogue } from "../../dialogue/helpers.js";
 import { ITEM_DIALOGUE_BY_REWARD_KIND } from "../../dialogue/text.js";
+import { projectilePathOverlaps } from "../../combat/projectiles.js";
 import {
   expandRect,
   rectanglesOverlap,
@@ -108,7 +109,7 @@ export function hitTargetProps(roomProps, projectiles) {
         continue;
       }
 
-      if (rectanglesOverlap(prop, projectile)) {
+      if (projectilePathOverlaps(projectile, prop)) {
         prop.destroyed = true;
         projectile.active = false;
       }

@@ -1,4 +1,4 @@
-import { createProjectile } from "../combat/projectiles.js";
+import { createProjectile, projectilePathOverlaps } from "../combat/projectiles.js";
 import { clampToCanvas, rectanglesOverlap, tickTimer } from "../utils.js";
 import { ENEMY_COMBAT } from "./core/constants.js";
 import { getRectangularPathPosition } from "./core/paths.js";
@@ -233,7 +233,7 @@ function isMeleeImmuneEnemyType(enemyType) {
 }
 
 function canProjectileHitEnemy(projectile, enemy) {
-  return projectile.active && enemy.alive && rectanglesOverlap(enemy, projectile);
+  return projectile.active && enemy.alive && projectilePathOverlaps(projectile, enemy);
 }
 
 function destroyFixedTurretFromProjectile(_roomEnemies, enemy, projectile) {

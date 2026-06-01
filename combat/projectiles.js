@@ -58,12 +58,14 @@ export function destroyProjectilesOnWalls(projectiles, walls) {
       continue;
     }
 
-    const projectileSweep = getProjectileSweep(projectile);
-
-    if (walls.some((wall) => rectanglesOverlap(projectileSweep, wall))) {
+    if (walls.some((wall) => projectilePathOverlaps(projectile, wall))) {
       projectile.active = false;
     }
   }
+}
+
+export function projectilePathOverlaps(projectile, hitbox) {
+  return rectanglesOverlap(getProjectileSweep(projectile), hitbox);
 }
 
 export function renderProjectiles(ctx, projectiles, offset = ZERO_OFFSET) {
