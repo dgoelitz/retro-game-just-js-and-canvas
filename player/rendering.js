@@ -3,7 +3,6 @@ import { renderShield } from "./shield.js";
 import { renderSword } from "./sword.js";
 
 const PLAYER_COLOR = "#ffcc00";
-const PLAYER_FACING_COLOR = "#1a1c2c";
 const PLAYER_FRAME_SIZE = 8;
 const PLAYER_WALK_FRAME_DURATION = 0.18;
 const PLAYER_SPRITE_FRAME_BY_STATE = {
@@ -22,7 +21,7 @@ export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
   ctx.save();
   ctx.globalAlpha = getPlayerAlpha(player);
   renderShield(ctx, drawPlayer, shield, offset);
-  renderPlayerBody(ctx, drawPlayer, offset);
+  renderPlayerSprite(ctx, drawPlayer, offset);
   renderSword(ctx, drawPlayer, sword, offset);
   ctx.restore();
 }
@@ -66,21 +65,6 @@ function getPlayerAlpha(player) {
   return flashPhase % 2 === 0 ? 0.45 : 1;
 }
 
-function renderPlayerBody(ctx, player, offset) {
-  if (isPlayerSpriteReady()) {
-    renderPlayerSprite(ctx, player, offset);
-    return;
-  }
-
-  ctx.fillStyle = PLAYER_COLOR;
-  ctx.fillRect(player.x + offset.x, player.y + offset.y, player.width, player.height);
-  renderFacingIndicator(ctx, player, offset);
-}
-
-function isPlayerSpriteReady() {
-  return playerSprite.complete && playerSprite.naturalWidth > 0;
-}
-
 function renderPlayerSprite(ctx, player, offset) {
   const frameIndex = getPlayerSpriteFrameIndex(player);
   const sourceX = frameIndex * PLAYER_FRAME_SIZE;
@@ -110,52 +94,4 @@ function getPlayerSpriteFrameIndex(player) {
   return walkCycleFrame === 0
     ? directionFrames.idle
     : directionFrames.walk;
-}
-
-function renderFacingIndicator(ctx, player, offset) {
-  const indicator = getFacingIndicator(player, offset);
-
-  ctx.fillStyle = PLAYER_FACING_COLOR;
-  ctx.fillRect(indicator.x, indicator.y, indicator.width, indicator.height);
-}
-
-function getFacingIndicator(player, offset) {
-  const drawX = player.x + offset.x;
-  const drawY = player.y + offset.y;
-  const centerX = drawX + Math.floor(player.width / 2) - 1;
-  const centerY = drawY + Math.floor(player.height / 2) - 1;
-
-  if (player.facing === "left") {
-    return {
-      x: drawX,
-      y: centerY,
-      width: 2,
-      height: 2
-    };
-  }
-
-  if (player.facing === "right") {
-    return {
-      x: drawX + player.width - 2,
-      y: centerY,
-      width: 2,
-      height: 2
-    };
-  }
-
-  if (player.facing === "up") {
-    return {
-      x: centerX,
-      y: drawY,
-      width: 2,
-      height: 2
-    };
-  }
-
-  return {
-    x: centerX,
-    y: drawY + player.height - 2,
-    width: 2,
-    height: 2
-  };
 }
