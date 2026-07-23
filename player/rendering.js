@@ -2,7 +2,10 @@ import { ZERO_OFFSET } from "../utils.js";
 import { renderShield } from "./shield.js";
 import { renderSword } from "./sword.js";
 
-const PLAYER_COLOR = "#ffcc00";
+const HEALTH_ICON_SIZE = 4;
+const HEALTH_ICON_GAP = 2;
+const HEALTH_HUD_X = 4;
+const HEALTH_HUD_Y = 4;
 const PLAYER_FRAME_SIZE = 8;
 const PLAYER_WALK_FRAME_DURATION = 0.18;
 const PLAYER_SPRITE_FRAME_BY_STATE = {
@@ -14,6 +17,9 @@ const PLAYER_SPRITE_FRAME_BY_STATE = {
 
 const playerSprite = new Image();
 playerSprite.src = "assets/player.png";
+
+const healthIcon = new Image();
+healthIcon.src = "assets/health.png";
 
 export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
   const drawPlayer = getDrawPlayer(player);
@@ -27,15 +33,9 @@ export function renderPlayer(ctx, player, sword, shield, offset = ZERO_OFFSET) {
 }
 
 export function renderPlayerHealth(ctx, player) {
-  const healthSquareSize = 4;
-  const healthSquareGap = 2;
-  const hudX = 4;
-  const hudY = 4;
-
   for (let i = 0; i < player.health; i += 1) {
-    const x = hudX + i * (healthSquareSize + healthSquareGap);
-    ctx.fillStyle = PLAYER_COLOR;
-    ctx.fillRect(x, hudY, healthSquareSize, healthSquareSize);
+    const x = HEALTH_HUD_X + i * (HEALTH_ICON_SIZE + HEALTH_ICON_GAP);
+    ctx.drawImage(healthIcon, x, HEALTH_HUD_Y, HEALTH_ICON_SIZE, HEALTH_ICON_SIZE);
   }
 }
 
