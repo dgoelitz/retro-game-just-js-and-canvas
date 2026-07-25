@@ -1,12 +1,14 @@
 import { ZERO_OFFSET } from "../utils.js";
 import { getDoorBounds, getRoomBounds } from "./doors/geometry.js";
-import { ROOM_BACKGROUND_COLOR, WALL_COLOR, WALL_THICKNESS } from "./rooms/constants.js";
+import { ROOM_BACKGROUND_COLOR } from "./rooms/constants.js";
 import { getRoomTransitionOffsets } from "./transition.js";
+import { drawDoorRoomWalls, drawInternalWall, drawOpenEdgeRoomWalls } from "./walls/rendering.js";
 
 const DOOR_OPENING_COLOR = "#1a1c2c";
 const DOOR_BAR_COLOR = "#d27d2c";
 const KEYHOLE_COLOR = "#ffcd75";
 const ONE_WAY_PLATFORM_COLOR = "#7e7f82";
+const DOOR_EDGES = ["top", "right", "bottom", "left"];
 
 export function renderWorld(ctx, world, canvas, renderRoomContents) {
   if (!world.transition) {
@@ -27,66 +29,53 @@ export function renderWorld(ctx, world, canvas, renderRoomContents) {
 function renderRoom(ctx, room, canvas, offset) {
   const roomBounds = getRoomBounds(canvas, offset);
 
+  drawRoomBackground(ctx, roomBounds);
+  drawRoomWalls(ctx, room, roomBounds);
+  drawDoorways(ctx, room, roomBounds);
+  drawInternalGeometry(ctx, room, offset);
+}
+
+function drawRoomBackground(ctx, roomBounds) {
   ctx.fillStyle = ROOM_BACKGROUND_COLOR;
   ctx.fillRect(roomBounds.left, roomBounds.top, roomBounds.width, roomBounds.height);
+}
 
+function drawRoomWalls(ctx, room, roomBounds) {
   if (hasCenteredDoors(room)) {
     drawDoorRoomWalls(ctx, room, roomBounds);
-  } else {
-    drawOpenEdgeRoomWalls(ctx, room, roomBounds);
+    return;
   }
 
-  drawInternalWalls(ctx, room, offset);
+  drawOpenEdgeRoomWalls(ctx, room, roomBounds);
 }
 
-function drawOpenEdgeRoomWalls(ctx, room, roomBounds) {
-  ctx.fillStyle = WALL_COLOR;
-
-  if (room.walls.top) {
-    ctx.fillRect(roomBounds.left, roomBounds.top, roomBounds.width, WALL_THICKNESS);
+function drawDoorways(ctx, room, roomBounds) {
+  if (!hasCenteredDoors(room)) {
+    return;
   }
 
-  if (room.walls.right) {
-    ctx.fillRect(roomBounds.right - WALL_THICKNESS, roomBounds.top, WALL_THICKNESS, roomBounds.height);
-  }
-
-  if (room.walls.bottom) {
-    ctx.fillRect(roomBounds.left, roomBounds.bottom - WALL_THICKNESS, roomBounds.width, WALL_THICKNESS);
-  }
-
-  if (room.walls.left) {
-    ctx.fillRect(roomBounds.left, roomBounds.top, WALL_THICKNESS, roomBounds.height);
+  for (const edge of DOOR_EDGES) {
+    drawDoorwayForEdge(ctx, roomBounds, room.doors[edge], edge);
   }
 }
 
-function drawDoorRoomWalls(ctx, room, roomBounds) {
-  drawDoorEdge(ctx, roomBounds, room.doors.top, "top");
-  drawDoorEdge(ctx, roomBounds, room.doors.right, "right");
-  drawDoorEdge(ctx, roomBounds, room.doors.bottom, "bottom");
-  drawDoorEdge(ctx, roomBounds, room.doors.left, "left");
-}
-
-function drawDoorEdge(ctx, roomBounds, door, edge) {
-  const doorBounds = getDoorBounds(edge, roomBounds, door);
-  const wallSegments = getWallSegmentsForDoor(edge, roomBounds, doorBounds, door);
-
-  ctx.fillStyle = WALL_COLOR;
-
-  for (const segment of wallSegments) {
-    ctx.fillRect(segment.x, segment.y, segment.width, segment.height);
-  }
-
+function drawDoorwayForEdge(ctx, roomBounds, door, edge) {
   if (!door) {
     return;
   }
 
-  drawDoorway(ctx, doorBounds, door);
+  const doorBounds = getDoorBounds(edge, roomBounds, door);
+
+  drawDoorOpening(ctx, doorBounds);
+  drawDoorDecoration(ctx, doorBounds, door);
 }
 
-function drawDoorway(ctx, doorBounds, door) {
+function drawDoorOpening(ctx, doorBounds) {
   ctx.fillStyle = DOOR_OPENING_COLOR;
   ctx.fillRect(doorBounds.x, doorBounds.y, doorBounds.width, doorBounds.height);
+}
 
+function drawDoorDecoration(ctx, doorBounds, door) {
   if (door.kind === "barred") {
     drawDoorBars(ctx, doorBounds);
     return;
@@ -94,25 +83,6 @@ function drawDoorway(ctx, doorBounds, door) {
 
   if (door.kind === "key" || door.kind === "boss-key") {
     drawKeyhole(ctx, doorBounds, door.kind === "boss-key");
-  }
-}
-
-function drawInternalWalls(ctx, room, offset) {
-  const internalWalls = room.internalWalls ?? [];
-  const oneWayPlatforms = room.oneWayPlatforms ?? [];
-
-  if (internalWalls.length === 0 && oneWayPlatforms.length === 0) {
-    return;
-  }
-
-  for (const wall of internalWalls) {
-    ctx.fillStyle = WALL_COLOR;
-    ctx.fillRect(wall.x + offset.x, wall.y + offset.y, wall.width, wall.height);
-  }
-
-  for (const platform of oneWayPlatforms) {
-    ctx.fillStyle = ONE_WAY_PLATFORM_COLOR;
-    ctx.fillRect(platform.x + offset.x, platform.y + offset.y, platform.width, platform.height);
   }
 }
 
@@ -140,54 +110,33 @@ function drawKeyhole(ctx, doorBounds, isBossKeyDoor) {
   ctx.fillRect(doorBounds.x, doorBounds.y + Math.floor(doorBounds.height / 2) - 1, doorBounds.width, 2);
 }
 
-function getWallSegmentsForDoor(edge, roomBounds, doorBounds, door) {
-  if (!door) {
-    if (edge === "top") {
-      return [{ x: roomBounds.left, y: roomBounds.top, width: roomBounds.width, height: WALL_THICKNESS }];
-    }
+function drawInternalGeometry(ctx, room, offset) {
+  drawInternalWalls(ctx, room.internalWalls ?? [], offset);
+  drawOneWayPlatforms(ctx, room.oneWayPlatforms ?? [], offset);
+}
 
-    if (edge === "right") {
-      return [{ x: roomBounds.right - WALL_THICKNESS, y: roomBounds.top, width: WALL_THICKNESS, height: roomBounds.height }];
-    }
-
-    if (edge === "bottom") {
-      return [{ x: roomBounds.left, y: roomBounds.bottom - WALL_THICKNESS, width: roomBounds.width, height: WALL_THICKNESS }];
-    }
-
-    return [{ x: roomBounds.left, y: roomBounds.top, width: WALL_THICKNESS, height: roomBounds.height }];
+function drawInternalWalls(ctx, walls, offset) {
+  for (const wall of walls) {
+    drawInternalWall(ctx, applyOffset(wall, offset));
   }
+}
 
-  if (edge === "top" || edge === "bottom") {
-    return [
-      {
-        x: roomBounds.left,
-        y: doorBounds.y,
-        width: doorBounds.x - roomBounds.left,
-        height: WALL_THICKNESS
-      },
-      {
-        x: doorBounds.x + doorBounds.width,
-        y: doorBounds.y,
-        width: roomBounds.right - (doorBounds.x + doorBounds.width),
-        height: WALL_THICKNESS
-      }
-    ];
+function drawOneWayPlatforms(ctx, platforms, offset) {
+  ctx.fillStyle = ONE_WAY_PLATFORM_COLOR;
+
+  for (const platform of platforms) {
+    const drawPlatform = applyOffset(platform, offset);
+    ctx.fillRect(drawPlatform.x, drawPlatform.y, drawPlatform.width, drawPlatform.height);
   }
+}
 
-  return [
-    {
-      x: doorBounds.x,
-      y: roomBounds.top,
-      width: WALL_THICKNESS,
-      height: doorBounds.y - roomBounds.top
-    },
-    {
-      x: doorBounds.x,
-      y: doorBounds.y + doorBounds.height,
-      width: WALL_THICKNESS,
-      height: roomBounds.bottom - (doorBounds.y + doorBounds.height)
-    }
-  ];
+function applyOffset(rect, offset) {
+  return {
+    x: rect.x + offset.x,
+    y: rect.y + offset.y,
+    width: rect.width,
+    height: rect.height
+  };
 }
 
 function hasCenteredDoors(room) {
