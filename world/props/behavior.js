@@ -7,7 +7,8 @@ import {
   resolveAxisSeparatedCollision,
   ZERO_OFFSET
 } from "../../utils.js";
-import { WALL_COLOR } from "../rooms/constants.js";
+import { WALL_THICKNESS } from "../rooms/constants.js";
+import { drawWallSegmentWithCorners } from "../walls/rendering.js";
 import { createDungeonRoomPropsByRoom, createOverworldRoomPropsByRoom } from "./layouts.js";
 import { createWorldKeyMap } from "../keys.js";
 
@@ -64,7 +65,7 @@ export function createRoomPropsByWorldKey() {
   );
 }
 
-export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
+export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET, canvas = null) {
   if (prop.destroyed || prop.hidden) {
     return;
   }
@@ -74,7 +75,7 @@ export function renderRoomProp(ctx, prop, offset = ZERO_OFFSET) {
   const renderProp = ROOM_PROP_RENDERERS[prop.kind];
 
   if (renderProp) {
-    renderProp(ctx, prop, drawX, drawY);
+    renderProp(ctx, prop, drawX, drawY, canvas);
   }
 }
 
@@ -201,9 +202,62 @@ function renderDungeonOpening(ctx, prop, drawX, drawY) {
   ctx.fillRect(drawX + 4, drawY + 4, prop.width - 8, prop.height - 4);
 }
 
-function renderWallBlock(ctx, prop, drawX, drawY) {
-  ctx.fillStyle = WALL_COLOR;
-  ctx.fillRect(drawX, drawY, prop.width, prop.height);
+function renderWallBlock(ctx, prop, drawX, drawY, canvas) {
+  const wall = {
+    x: drawX,
+    y: drawY,
+    width: prop.width,
+    height: prop.height
+  };
+  const edge = prop.edge ?? getWallBlockEdge(prop);
+  const cornerNames = getWallBlockCornerNames(prop, edge, canvas);
+
+  drawWallSegmentWithCorners(ctx, wall, edge, cornerNames);
+}
+
+function getWallBlockEdge(prop) {
+  if (prop.height === WALL_THICKNESS) {
+    return prop.y === 0 ? "top" : "bottom";
+  }
+
+  return prop.x === 0 ? "left" : "right";
+}
+
+function getWallBlockCornerNames(prop, edge, canvas) {
+  if (!canvas) {
+    return [];
+  }
+
+  const touchesLeft = prop.x === 0;
+  const touchesRight = prop.x + prop.width === canvas.width;
+  const touchesTop = prop.y === 0;
+  const touchesBottom = prop.y + prop.height === canvas.height;
+
+  if (edge === "top") {
+    return [
+      touchesLeft && "topLeft",
+      touchesRight && "topRight"
+    ].filter(Boolean);
+  }
+
+  if (edge === "right") {
+    return [
+      touchesTop && "topRight",
+      touchesBottom && "bottomRight"
+    ].filter(Boolean);
+  }
+
+  if (edge === "bottom") {
+    return [
+      touchesLeft && "bottomLeft",
+      touchesRight && "bottomRight"
+    ].filter(Boolean);
+  }
+
+  return [
+    touchesTop && "topLeft",
+    touchesBottom && "bottomLeft"
+  ].filter(Boolean);
 }
 
 function renderChest(ctx, prop, drawX, drawY) {

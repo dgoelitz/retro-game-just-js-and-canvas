@@ -139,7 +139,7 @@ function getWallSegmentsAroundDoor(edge, roomBounds, doorBounds, door) {
   ];
 }
 
-function drawWallSegment(ctx, segment, edge) {
+export function drawWallSegment(ctx, segment, edge) {
   if (!isWallSpriteReady()) {
     drawFallbackWall(ctx, segment);
     return;
@@ -148,6 +148,44 @@ function drawWallSegment(ctx, segment, edge) {
   for (const tile of getWallTiles(segment, edge)) {
     drawWallSpriteFrame(ctx, WALL_EDGE_FRAME, tile.x, tile.y, WALL_EDGE_ROTATION[edge]);
   }
+}
+
+export function drawWallSegmentWithCorners(ctx, segment, edge, cornerNames = []) {
+  if (!isWallSpriteReady()) {
+    drawFallbackWall(ctx, segment);
+    return;
+  }
+
+  drawWallSegment(ctx, segment, edge);
+
+  for (const corner of getWallSegmentCorners(segment, cornerNames)) {
+    drawWallSpriteFrame(ctx, WALL_CORNER_FRAME, corner.x, corner.y, WALL_CORNER_ROTATION[corner.name]);
+  }
+}
+
+function getWallSegmentCorners(segment, cornerNames) {
+  return cornerNames.map((name) => getWallSegmentCornerPosition(segment, name));
+}
+
+function getWallSegmentCornerPosition(segment, cornerName) {
+  const xByCorner = {
+    topLeft: segment.x,
+    bottomLeft: segment.x,
+    topRight: segment.x + segment.width - WALL_THICKNESS,
+    bottomRight: segment.x + segment.width - WALL_THICKNESS
+  };
+  const yByCorner = {
+    topLeft: segment.y,
+    topRight: segment.y,
+    bottomRight: segment.y + segment.height - WALL_THICKNESS,
+    bottomLeft: segment.y + segment.height - WALL_THICKNESS
+  };
+
+  return {
+    name: cornerName,
+    x: xByCorner[cornerName],
+    y: yByCorner[cornerName]
+  };
 }
 
 function getWallTiles(segment, edge) {

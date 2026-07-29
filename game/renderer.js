@@ -41,7 +41,7 @@ export function renderGame(ctx, canvas, session) {
 
     renderRoomEnemies(ctx, roomEnemies, offset, isActiveRoom, session.roomEntryGraceTimer);
     renderProjectiles(ctx, roomProjectiles, offset);
-    renderRoomProps(ctx, roomProps, offset);
+    renderRoomProps(ctx, roomProps, offset, canvas);
     renderRoomNpcs(ctx, roomNpcs, offset);
 
     if (isActiveRoom) {
@@ -60,9 +60,9 @@ function renderRoomEnemies(ctx, roomEnemies, offset, isActiveRoom, roomEntryGrac
   }
 }
 
-function renderRoomProps(ctx, roomProps, offset) {
+function renderRoomProps(ctx, roomProps, offset, canvas) {
   for (const prop of roomProps) {
-    renderRoomProp(ctx, prop, offset);
+    renderRoomProp(ctx, prop, offset, canvas);
   }
 }
 
